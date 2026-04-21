@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Page, PageHeader, Grid } from "@/components/layout/page";
+import { EmptyState } from "@/components/empty-state";
 import { formatUptime, api } from "@/lib/api";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -29,16 +30,22 @@ export default function Dashboard() {
 
   if (error && !status) {
     return (
-      <div className="flex flex-col gap-2 p-8 rounded-lg border border-destructive/30 bg-destructive/5">
-        <h2 className="text-xl font-semibold">Daemon unreachable</h2>
-        <p className="text-sm text-muted-foreground font-mono">{error}</p>
-        <p className="text-sm mt-2">
-          Is the daemon running? Try:
-          <code className="ml-2 px-2 py-1 rounded bg-muted font-mono text-xs">
-            launchctl kickstart -k gui/$(id -u)/com.$(whoami).claude-bridge
-          </code>
-        </p>
-      </div>
+      <Page>
+        <PageHeader
+          title="Dashboard"
+          description="Status and controls for the claude-bridge daemon."
+        />
+        <EmptyState
+          title="Daemon unreachable"
+          description="The admin API isn't responding. The daemon may not be running."
+          icon={<span className="text-xl">⚠</span>}
+          action={
+            <code className="px-3 py-1.5 rounded-md bg-muted font-mono text-xs">
+              launchctl kickstart -k gui/$(id -u)/com.$(whoami).claude-bridge
+            </code>
+          }
+        />
+      </Page>
     );
   }
 
