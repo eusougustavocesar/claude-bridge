@@ -18,7 +18,7 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <Page width="narrow">
+    <Page>
       <PageHeader
         title="Something broke"
         description="The UI hit an unexpected error. The daemon might still be running — this only affects the admin view."

@@ -1,16 +1,17 @@
 import { cn } from "@/lib/utils";
 import type { ReactNode, HTMLAttributes } from "react";
 
-type Width = "narrow" | "default" | "wide";
-
-const WIDTH: Record<Width, string> = {
-  narrow: "max-w-3xl", // ~768px — forms, reading
-  default: "max-w-5xl", // ~1024px — dashboards (default)
-  wide: "max-w-7xl", // ~1280px — broad content, grids with many cols
-};
+/**
+ * Pages always use a single shared container (max-w-5xl) so the LEFT
+ * edge of every PageHeader / H1 aligns vertically between routes.
+ *
+ * When a specific section needs to be narrower (e.g. a form or QR),
+ * wrap that section with `<div className="max-w-2xl">` INSIDE the page.
+ * Don't vary the outer page width — that breaks the grid.
+ */
+const CONTAINER = "max-w-5xl";
 
 interface PageProps extends HTMLAttributes<HTMLDivElement> {
-  width?: Width;
   children: ReactNode;
 }
 
@@ -18,18 +19,21 @@ interface PageProps extends HTMLAttributes<HTMLDivElement> {
  * Page root wrapper. Enforces:
  *  - Consistent max-width (narrow / default / wide)
  *  - Vertical rhythm: gap-8 between top-level sections
+ *
+ * Canonical gap scale (use these values anywhere in the UI):
+ *   gap-8 → between Page's own children (top-level sections). Automatic here.
+ *   gap-6 → between cards in a related group / between major form sections
+ *   gap-5 → between field rows inside a Card's CardContent
+ *   gap-4 → between cards in a Grid, between items in an asymmetric row
+ *   gap-3 → between form fields inside a row / between toolbar items
+ *   gap-2 → between tightly coupled inline items (badge + label, icon + text)
  */
-export function Page({
-  width = "default",
-  children,
-  className,
-  ...rest
-}: PageProps) {
+export function Page({ children, className, ...rest }: PageProps) {
   return (
     <div
       className={cn(
-        "flex flex-col gap-8 w-full mx-auto",
-        WIDTH[width],
+        "flex flex-col gap-8 w-full mx-auto px-6",
+        CONTAINER,
         className
       )}
       {...rest}

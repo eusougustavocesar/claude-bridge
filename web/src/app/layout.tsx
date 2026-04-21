@@ -40,9 +40,10 @@ export default function RootLayout({
     >
       <body className="min-h-full bg-background text-foreground font-sans">
         <Nav />
-        {/* pt-14 reserves space for the 56px fixed header, pt-8 is the
-            page's own top breathing room */}
-        <main className="w-full px-6 pt-[calc(theme(spacing.14)+theme(spacing.8))] pb-12">
+        {/* Nav and Page both own their horizontal padding, so we keep
+            main minimal — just reserves space for the 56px fixed header
+            plus the page's top breathing room. */}
+        <main className="w-full pt-[calc(theme(spacing.14)+theme(spacing.8))] pb-12">
           {children}
         </main>
         <Toaster position="top-right" />

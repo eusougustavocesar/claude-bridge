@@ -127,10 +127,14 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
   html {
     @apply font-sans;
+    /* Reserve scrollbar space always so the fixed nav and the scrollable
+       page content share the exact same horizontal grid — otherwise the
+       right edge shifts by ~15px on routes with scrollable content. */
+    scrollbar-gutter: stable;
+  }
+  body {
+    @apply bg-background text-foreground;
   }
 }

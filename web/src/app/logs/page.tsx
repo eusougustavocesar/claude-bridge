@@ -67,7 +67,7 @@ export default function LogsPage() {
   }, [entries, msgTypeFilter]);
 
   return (
-    <Page width="wide">
+    <Page>
       <PageHeader
         title="Audit log"
         description={

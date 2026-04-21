@@ -70,15 +70,21 @@ export default function ConfigPage() {
 
   if (loading) {
     return (
-      <div className="text-muted-foreground text-sm">Loading config…</div>
+      <Page>
+        <PageHeader title="Configuration" />
+        <div className="text-muted-foreground text-sm">Loading config…</div>
+      </Page>
     );
   }
 
   if (error) {
     return (
-      <div className="p-6 rounded-lg border border-destructive/30 bg-destructive/5 text-destructive text-sm font-mono">
-        {error}
-      </div>
+      <Page>
+        <PageHeader title="Configuration" />
+        <div className="p-6 rounded-lg border border-destructive/30 bg-destructive/5 text-destructive text-sm font-mono">
+          {error}
+        </div>
+      </Page>
     );
   }
 
@@ -86,29 +92,40 @@ export default function ConfigPage() {
 
   return (
     <Page>
-      <form onSubmit={onSubmit} className="flex flex-col gap-8">
-        <PageHeader
-          title="Configuration"
-          description={
-            <>
-              Edit <code className="font-mono text-xs">.env</code>. Changes
-              apply after a daemon restart.
-            </>
-          }
-          actions={
-            <Button type="submit" disabled={saving} size="sm">
-              {saving ? "Saving…" : "Save"}
-            </Button>
-          }
-        />
+      {/* PageHeader stays at the Page's full 5xl width so the H1 and Save
+          button sit in the same column as other pages' headers */}
+      <PageHeader
+        title="Configuration"
+        description={
+          <>
+            Edit <code className="font-mono text-xs">.env</code>. Changes
+            apply after a daemon restart.
+          </>
+        }
+        actions={
+          <Button
+            type="submit"
+            form="config-form"
+            disabled={saving}
+            size="sm"
+          >
+            {saving ? "Saving…" : "Save"}
+          </Button>
+        }
+      />
 
+      <form
+        id="config-form"
+        onSubmit={onSubmit}
+        className="flex flex-col gap-6"
+      >
       {CONFIG_SCHEMA.map((group) => (
         <Card key={group.id}>
           <CardHeader>
             <CardTitle className="text-base">{group.title}</CardTitle>
             <CardDescription>{group.description}</CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-6">
+          <CardContent className="flex flex-col gap-5">
             {group.fields.map((field, idx) => (
               <Field
                 key={field.key}
@@ -171,8 +188,8 @@ function Field({
 }) {
   return (
     <div>
-      {separator ? <Separator className="mb-6" /> : null}
-      <div className="grid sm:grid-cols-[240px_1fr] gap-3 sm:gap-6 items-start">
+      {separator ? <Separator className="mb-5" /> : null}
+      <div className="grid md:grid-cols-[200px_1fr] gap-3 md:gap-4 items-start">
         <div className="flex flex-col gap-1">
           <Label htmlFor={field.key} className="text-sm font-medium">
             {field.label}

@@ -55,7 +55,7 @@ export default function PairPage() {
   const connection = status?.connection ?? "disconnected";
 
   return (
-    <Page width="narrow">
+    <Page>
       <PageHeader
         title="Pair a phone"
         description="Link a WhatsApp account to the bridge. The daemon stays paired across reboots."
@@ -94,9 +94,10 @@ launchctl bootstrap gui/$(id -u) \\
           </CardContent>
         </Card>
       ) : (
-        <div className="grid md:grid-cols-[auto_1fr] gap-6 items-start">
+        // Asymmetric layout: QR card sizes to content, instructions take rest
+        <div className="grid md:grid-cols-[auto_1fr] gap-4 items-start">
           <Card className="p-0 overflow-hidden shrink-0">
-            <CardContent className="p-6 flex items-center justify-center min-h-[400px] min-w-[400px]">
+            <CardContent className="p-4 flex items-center justify-center h-[380px] w-[380px]">
               {qrValue ? (
                 <canvas
                   ref={canvasRef}
@@ -104,16 +105,14 @@ launchctl bootstrap gui/$(id -u) \\
                   aria-label="WhatsApp pairing QR code"
                 />
               ) : (
-                <div className="flex flex-col items-center gap-3 text-muted-foreground text-sm">
-                  <div className="h-[320px] w-[320px] rounded-md border border-dashed border-border flex items-center justify-center">
-                    {qrError ? (
-                      <span className="text-destructive text-xs font-mono px-4 text-center">
-                        {qrError}
-                      </span>
-                    ) : (
-                      <span>Waiting for QR…</span>
-                    )}
-                  </div>
+                <div className="h-[340px] w-[340px] rounded-md border border-dashed border-border flex items-center justify-center text-muted-foreground text-sm">
+                  {qrError ? (
+                    <span className="text-destructive text-xs font-mono px-4 text-center">
+                      {qrError}
+                    </span>
+                  ) : (
+                    <span>Waiting for QR…</span>
+                  )}
                 </div>
               )}
             </CardContent>

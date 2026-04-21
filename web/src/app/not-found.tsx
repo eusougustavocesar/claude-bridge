@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/empty-state";
 
 export default function NotFound() {
   return (
-    <Page width="narrow">
+    <Page>
       <PageHeader title="Page not found" />
       <EmptyState
         title="This route doesn't exist in the admin UI"
