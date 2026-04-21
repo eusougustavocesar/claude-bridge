@@ -14,7 +14,7 @@ Every option had a wall:
 
 So I built claude-bridge. ~50 MB, LaunchAgent, uses your Claude sub.
 
-github.com/USER/claude-bridge
+github.com/eusougustavocesar/claude-bridge
 ```
 
 [attach demo GIF here — 10-15s showing: send msg on phone → Mac closed → reply arrives]
@@ -71,7 +71,7 @@ Next up:
 • Audio + images (v0.5)
 
 Issues, PRs, or just ⭐ welcome:
-github.com/USER/claude-bridge
+github.com/eusougustavocesar/claude-bridge
 
 HN post: [link once live]
 ```

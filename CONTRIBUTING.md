@@ -30,7 +30,7 @@ When v0.2 lands, adding a new channel should mean implementing a small `Channel`
 ## Development
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/claude-bridge.git
+git clone https://github.com/eusougustavocesar/claude-bridge.git
 cd claude-bridge
 npm install
 cp .env.example .env

@@ -52,7 +52,7 @@ Everyone building "Claude via WhatsApp" hits the same wall: **persistence**.
 ### Install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/claude-bridge.git
+git clone https://github.com/eusougustavocesar/claude-bridge.git
 cd claude-bridge
 
 # Install deps and build

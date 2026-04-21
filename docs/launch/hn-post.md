@@ -49,8 +49,8 @@ What's next:
 
 It's MIT-licensed, ~50 MB RAM, no cloud, no telemetry. Uses your Claude Code subscription via `claude --print` — no API tokens needed.
 
-Repo: https://github.com/YOUR_USERNAME/claude-bridge
-Why I built it (longer writeup): https://github.com/YOUR_USERNAME/claude-bridge/blob/main/docs/why-persistence.md
+Repo: https://github.com/eusougustavocesar/claude-bridge
+Why I built it (longer writeup): https://github.com/eusougustavocesar/claude-bridge/blob/main/docs/why-persistence.md
 
 Happy to hear feedback — especially from anyone who's tried the official plugin or the Docker alternatives. Curious how many of you would actually use this vs. just waiting for Anthropic to add native persistence.
 ```

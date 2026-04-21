@@ -30,9 +30,9 @@ So I wrote a ~300-line Node daemon that uses Baileys (WhatsApp multidevice) + sp
 2. `claude --print` hangs without a TTY when MCP servers try to start. Pass `--mcp-config` pointing to `{"mcpServers":{}}` to bypass while keeping OAuth working.
 3. `--bare` disables keychain reads, breaking OAuth for subscription users. The empty `--mcp-config` is the narrower fix.
 
-**Repo:** [github.com/USER/claude-bridge](https://github.com/USER/claude-bridge)
+**Repo:** [github.com/eusougustavocesar/claude-bridge](https://github.com/eusougustavocesar/claude-bridge)
 
-**Full writeup on why + arch:** [docs/why-persistence.md](https://github.com/USER/claude-bridge/blob/main/docs/why-persistence.md)
+**Full writeup on why + arch:** [docs/why-persistence.md](https://github.com/eusougustavocesar/claude-bridge/blob/main/docs/why-persistence.md)
 
 Happy to answer questions / take feedback. Especially interested in hearing:
 - Anyone who tried the official plugin and hit the same wall?
