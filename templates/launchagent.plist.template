@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  LaunchAgent template for claude-bridge.
+
+  The install.sh script substitutes:
+    {{USER}}      → your macOS username
+    {{NODE_BIN}}  → path to `node`
+    {{REPO_DIR}}  → absolute path to the claude-bridge repo
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.{{USER}}.claude-bridge</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>{{NODE_BIN}}</string>
+        <string>{{REPO_DIR}}/dist/bot.js</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>{{REPO_DIR}}</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/Users/{{USER}}/.local/bin:/Users/{{USER}}/.npm-global/bin:/Users/{{USER}}/.bun/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>HOME</key>
+        <string>/Users/{{USER}}</string>
+        <key>NODE_ENV</key>
+        <string>production</string>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/claude-bridge.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/tmp/claude-bridge.err</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420" font-family="-apple-system, BlinkMacSystemFont, Inter, Helvetica, sans-serif" font-size="13">
+  <style>
+    .box { fill: #ffffff; stroke: #1f2937; stroke-width: 1.5; rx: 8; ry: 8; }
+    .daemon-box { fill: #dbeafe; stroke: #1e40af; stroke-width: 2; rx: 8; ry: 8; }
+    .cloud-box { fill: #fef3c7; stroke: #b45309; stroke-width: 1.5; rx: 8; ry: 8; }
+    .claude-box { fill: #dcfce7; stroke: #166534; stroke-width: 1.5; rx: 8; ry: 8; }
+    .label { fill: #1f2937; font-weight: 600; }
+    .sublabel { fill: #6b7280; font-size: 11px; }
+    .arrow { stroke: #1f2937; stroke-width: 1.5; fill: none; marker-end: url(#arrowhead); }
+    .dashed { stroke: #6b7280; stroke-width: 1.2; stroke-dasharray: 4 3; fill: none; }
+    .host-box { fill: none; stroke: #9ca3af; stroke-width: 1; stroke-dasharray: 6 4; rx: 10; ry: 10; }
+    .host-label { fill: #6b7280; font-size: 11px; font-style: italic; }
+  </style>
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#1f2937"/>
+    </marker>
+  </defs>
+
+  <!-- LaunchAgent host boundary -->
+  <rect x="90" y="150" width="540" height="140" class="host-box"/>
+  <text x="360" y="145" text-anchor="middle" class="host-label">hosted by LaunchAgent (macOS) / systemd (planned)</text>
+
+  <!-- WhatsApp cloud -->
+  <rect x="240" y="30" width="240" height="60" class="cloud-box"/>
+  <text x="360" y="55" text-anchor="middle" class="label">WhatsApp servers (cloud)</text>
+  <text x="360" y="73" text-anchor="middle" class="sublabel">multidevice protocol (WebSocket)</text>
+
+  <!-- Daemon (long-lived) -->
+  <rect x="120" y="170" width="480" height="100" class="daemon-box"/>
+  <text x="360" y="192" text-anchor="middle" class="label">claude-bridge daemon (Node)</text>
+  <text x="360" y="210" text-anchor="middle" class="sublabel">Baileys client · message handler · rate limit · audit</text>
+  <text x="360" y="228" text-anchor="middle" class="sublabel">~50 MB RAM · KeepAlive=true · RunAtLoad=true</text>
+  <text x="360" y="256" text-anchor="middle" class="sublabel" font-style="italic">(long-lived: survives reboot, auto-restarts, auto-reconnects)</text>
+
+  <!-- Claude subprocess (per-message) -->
+  <rect x="240" y="320" width="240" height="60" class="claude-box"/>
+  <text x="360" y="345" text-anchor="middle" class="label">claude --print (your CC session)</text>
+  <text x="360" y="363" text-anchor="middle" class="sublabel">short-lived · spawned per message</text>
+
+  <!-- Arrows -->
+  <path class="arrow" d="M 360 90 V 170"/>
+  <text x="370" y="125" class="sublabel">linked device</text>
+
+  <path class="arrow" d="M 340 270 V 320"/>
+  <text x="190" y="300" class="sublabel">spawn subprocess (stdin prompt)</text>
+
+  <path class="arrow" d="M 380 320 V 280" transform="translate(0 -10)"/>
+  <text x="460" y="300" class="sublabel">stdout → reply to chat</text>
+</svg>

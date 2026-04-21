@@ -1,0 +1,11 @@
+node_modules
+dist
+auth_info
+.env
+logs/*.log
+logs/audit.jsonl
+workspace/*
+!workspace/.gitkeep
+!workspace/CLAUDE.md
+.DS_Store
+*.tsbuildinfo
