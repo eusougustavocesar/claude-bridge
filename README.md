@@ -6,6 +6,10 @@
 </p>
 
 <p align="center">
+  <img src="assets/demo.gif" alt="Demo — sending a prompt from WhatsApp, Claude replies. Mac is asleep the whole time." width="320"/>
+</p>
+
+<p align="center">
   <a href="#quickstart">Quickstart</a> ·
   <a href="#why">Why</a> ·
   <a href="#how-it-works">How it works</a> ·
