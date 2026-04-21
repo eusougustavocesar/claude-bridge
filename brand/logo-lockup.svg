@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 60" width="400" height="60" fill="none" role="img" aria-label="claude-bridge">
+  <!-- symbol -->
+  <g transform="translate(0, 14)">
+    <circle cx="6" cy="16" r="4" fill="#fafafa"/>
+    <circle cx="30" cy="16" r="4" fill="#fafafa"/>
+    <path d="M10 16 H26" stroke="#00ffa9" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  <!-- wordmark -->
+  <text x="52" y="44" fill="#fafafa"
+        font-family="Geist, Inter, -apple-system, system-ui, sans-serif"
+        font-weight="700" font-size="40" letter-spacing="-0.02em">
+    <tspan>claude</tspan><tspan fill="#00ffa9">-</tspan><tspan>bridge</tspan>
+  </text>
+</svg>

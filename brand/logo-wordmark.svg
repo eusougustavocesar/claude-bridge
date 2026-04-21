@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 60" width="360" height="60" fill="none" role="img" aria-label="claude-bridge">
+  <text x="0" y="44" fill="#fafafa"
+        font-family="Geist, Inter, -apple-system, system-ui, sans-serif"
+        font-weight="700" font-size="40" letter-spacing="-0.02em">
+    <tspan>claude</tspan><tspan fill="#00ffa9">-</tspan><tspan>bridge</tspan>
+  </text>
+</svg>

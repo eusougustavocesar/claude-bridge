@@ -1,4 +1,6 @@
-<h1 align="center">claude-bridge</h1>
+<p align="center">
+  <img src="brand/logo-lockup.png" alt="claude-bridge" width="400"/>
+</p>
 
 <p align="center">
   <b>Persistent Claude Code across messaging channels.</b><br>

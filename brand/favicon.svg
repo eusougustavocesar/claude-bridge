@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" fill="none" role="img" aria-label="claude-bridge">
+  <rect width="32" height="32" rx="6" fill="#0a0a0a"/>
+  <circle cx="9" cy="16" r="2.5" fill="#fafafa"/>
+  <circle cx="23" cy="16" r="2.5" fill="#fafafa"/>
+  <path d="M11.5 16 H20.5" stroke="#00ffa9" stroke-width="2" stroke-linecap="round"/>
+</svg>
