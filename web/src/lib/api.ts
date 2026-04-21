@@ -49,6 +49,14 @@ async function json<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+export interface ClaudeAuthStatus {
+  authenticated: boolean;
+  loginRunning: boolean;
+  loginUrl: string | null;
+  lastError?: string | null;
+  probeError?: string | null;
+}
+
 export const api = {
   status: () => json<StatusResponse>("/api/status"),
   qr: () => json<QrResponse>("/api/qr"),
@@ -61,6 +69,16 @@ export const api = {
   logs: (limit = 100) => json<LogsResponse>(`/api/logs?limit=${limit}`),
   stop: () =>
     json<{ ok: boolean; stopping: boolean }>("/api/stop", { method: "POST" }),
+
+  // Claude auth
+  claudeAuth: () => json<ClaudeAuthStatus>("/api/claude/auth/status"),
+  claudeAuthStart: () =>
+    json<{ running: boolean; url: string; startedAt: number }>(
+      "/api/claude/auth/start",
+      { method: "POST" }
+    ),
+  claudeAuthCancel: () =>
+    json<{ ok: boolean }>("/api/claude/auth/cancel", { method: "POST" }),
 };
 
 export function formatUptime(ms: number): string {

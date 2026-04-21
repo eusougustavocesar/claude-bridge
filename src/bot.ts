@@ -441,6 +441,9 @@ if (HTTP_ENABLED) {
     readEnv: readEnvFile,
     writeEnv: writeEnvFile,
     onStop: () => logger.warn("stop requested via HTTP"),
+    claudeBin: CLAUDE_BIN,
+    claudeCwd: CLAUDE_CWD,
+    claudeMcpConfig: CLAUDE_MCP_CONFIG,
   });
 }
 

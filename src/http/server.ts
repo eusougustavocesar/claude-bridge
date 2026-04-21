@@ -1,10 +1,11 @@
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
+import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync, statSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join, resolve, extname } from "node:path";
 import pino from "pino";
-import { state } from "./state.js";
+import { state, claudeAuth } from "./state.js";
 
 const logger = pino({ level: "info", name: "http" });
 
@@ -19,6 +20,12 @@ export interface HttpServerOptions {
   onStop?: () => void;
   readEnv: () => Record<string, string>;
   writeEnv: (values: Record<string, string>) => void;
+  /** Absolute path to the `claude` CLI binary. */
+  claudeBin: string;
+  /** Working directory to spawn `claude --print` in. */
+  claudeCwd: string;
+  /** Path to the empty MCP config file to pass to claude subprocesses. */
+  claudeMcpConfig: string;
 }
 
 export function createHttpServer(opts: HttpServerOptions) {
@@ -44,6 +51,152 @@ export function createHttpServer(opts: HttpServerOptions) {
 
   app.get("/api/qr", (c) => {
     return c.json({ qr: state.qr });
+  });
+
+  // ----- Claude auth ---------------------------------------------------
+  // Subprocess-based login flow: spawn `claude login`, capture the device
+  // code URL from stdout, surface it to the UI. User opens URL in browser,
+  // completes OAuth, the subprocess writes the token to macOS keychain.
+
+  let loginProc: ChildProcess | null = null;
+
+  function resetAuth() {
+    claudeAuth.running = false;
+    claudeAuth.url = null;
+    claudeAuth.startedAt = null;
+    claudeAuth.error = null;
+  }
+
+  app.post("/api/claude/auth/start", async (c) => {
+    if (loginProc && claudeAuth.running) {
+      return c.json(
+        {
+          error: "login already in progress",
+          url: claudeAuth.url,
+          startedAt: claudeAuth.startedAt,
+        },
+        409
+      );
+    }
+    resetAuth();
+    claudeAuth.running = true;
+    claudeAuth.startedAt = Date.now();
+
+    const child = spawn(opts.claudeBin, ["login"], {
+      cwd: opts.claudeCwd,
+      env: { ...process.env, BROWSER: "none" },
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+    loginProc = child;
+
+    const urlRe = /(https?:\/\/[^\s"']+)/;
+    const onData = (chunk: Buffer) => {
+      const s = chunk.toString();
+      if (!claudeAuth.url) {
+        const m = s.match(urlRe);
+        if (m) claudeAuth.url = m[1];
+      }
+    };
+    child.stdout.on("data", onData);
+    child.stderr.on("data", onData);
+
+    child.on("error", (err) => {
+      logger.error({ err }, "claude login spawn error");
+      claudeAuth.running = false;
+      claudeAuth.error = err.message;
+      loginProc = null;
+    });
+
+    child.on("close", (code) => {
+      logger.info({ code }, "claude login exited");
+      claudeAuth.running = false;
+      if (code === 0) {
+        claudeAuth.authenticated = true;
+        claudeAuth.authenticatedAt = Date.now();
+        claudeAuth.error = null;
+      } else if (code !== null) {
+        claudeAuth.error = `claude login exited with code ${code}`;
+      }
+      loginProc = null;
+    });
+
+    // Auto-kill after 10 minutes if user never completes
+    const AUTO_KILL_MS = 10 * 60 * 1000;
+    setTimeout(() => {
+      if (loginProc === child && claudeAuth.running) {
+        logger.warn("claude login timed out after 10min, killing");
+        child.kill("SIGTERM");
+      }
+    }, AUTO_KILL_MS);
+
+    // Give the subprocess up to 4s to emit the URL
+    const started = Date.now();
+    while (!claudeAuth.url && Date.now() - started < 4000) {
+      await new Promise((r) => setTimeout(r, 100));
+    }
+
+    if (!claudeAuth.url) {
+      return c.json(
+        {
+          error:
+            "no URL captured from claude login output. Your claude CLI may not support headless login.",
+          running: claudeAuth.running,
+        },
+        500
+      );
+    }
+
+    return c.json({
+      running: true,
+      url: claudeAuth.url,
+      startedAt: claudeAuth.startedAt,
+    });
+  });
+
+  app.get("/api/claude/auth/status", async (c) => {
+    // If a recent probe exists (<10s) and succeeded, return cached
+    const now = Date.now();
+    const cacheTtl = 10_000;
+    const hasFresh =
+      claudeAuth.authenticatedAt !== null &&
+      now - claudeAuth.authenticatedAt < cacheTtl;
+
+    if (hasFresh && claudeAuth.authenticated && !claudeAuth.running) {
+      return c.json({
+        authenticated: true,
+        loginRunning: false,
+        loginUrl: null,
+        cachedAt: claudeAuth.authenticatedAt,
+      });
+    }
+
+    // Probe: spawn claude --print "ok" with tight timeout
+    const probe = await probeClaudeAuth(
+      opts.claudeBin,
+      opts.claudeCwd,
+      opts.claudeMcpConfig
+    );
+    claudeAuth.authenticated = probe.ok;
+    claudeAuth.authenticatedAt = now;
+    claudeAuth.probeError = probe.ok ? null : probe.error ?? null;
+
+    return c.json({
+      authenticated: probe.ok,
+      loginRunning: claudeAuth.running,
+      loginUrl: claudeAuth.url,
+      lastError: claudeAuth.error,
+      probeError: claudeAuth.probeError,
+    });
+  });
+
+  app.post("/api/claude/auth/cancel", (c) => {
+    if (loginProc) {
+      logger.info("claude login cancelled by user");
+      loginProc.kill("SIGTERM");
+      loginProc = null;
+    }
+    resetAuth();
+    return c.json({ ok: true });
   });
 
   app.get("/api/config", (c) => {
@@ -168,6 +321,63 @@ export function createHttpServer(opts: HttpServerOptions) {
       logger.info("HTTP server closed");
     },
   };
+}
+
+// ----- Claude auth probe ---------------------------------------------
+
+/**
+ * Probes claude CLI auth by invoking `claude --print "ok"` with a tight
+ * timeout. Returns `{ ok: true }` if claude answers cleanly, else reports
+ * the stderr tail.
+ */
+function probeClaudeAuth(
+  claudeBin: string,
+  cwd: string,
+  mcpConfig: string
+): Promise<{ ok: boolean; error?: string }> {
+  return new Promise((resolve) => {
+    const child = spawn(
+      claudeBin,
+      [
+        "--print",
+        "--mcp-config",
+        mcpConfig,
+        "--no-session-persistence",
+      ],
+      {
+        cwd,
+        env: { ...process.env, CI: "1" },
+        stdio: ["pipe", "pipe", "pipe"],
+      }
+    );
+
+    let stderr = "";
+    const timer = setTimeout(() => child.kill("SIGTERM"), 15_000);
+
+    child.stderr.on("data", (d) => (stderr += d.toString()));
+    child.on("error", (err) => {
+      clearTimeout(timer);
+      resolve({ ok: false, error: err.message });
+    });
+    child.on("close", (code) => {
+      clearTimeout(timer);
+      if (code === 0) return resolve({ ok: true });
+      const combined = stderr.toLowerCase();
+      const notAuthed =
+        combined.includes("not logged in") ||
+        combined.includes("please run /login") ||
+        combined.includes("login");
+      resolve({
+        ok: false,
+        error: notAuthed
+          ? "Not logged in — run `claude login` or use the Connect button."
+          : stderr.trim().slice(-200) || `exit ${code}`,
+      });
+    });
+
+    child.stdin.write("ok");
+    child.stdin.end();
+  });
 }
 
 // ----- Static file resolver (for Next.js static export) --------------

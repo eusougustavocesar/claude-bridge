@@ -8,6 +8,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Page, PageHeader, Grid } from "@/components/layout/page";
 import { EmptyState } from "@/components/empty-state";
+import { ClaudeAuthCard } from "@/components/claude-auth-card";
 import { formatUptime, api } from "@/lib/api";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -72,6 +73,8 @@ export default function Dashboard() {
           </>
         }
       />
+
+      <ClaudeAuthCard />
 
       <Grid cols={{ base: 1, sm: 2, lg: 3 }} gap={4}>
         <Card>

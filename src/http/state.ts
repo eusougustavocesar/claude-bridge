@@ -28,3 +28,28 @@ export const state: BridgeState = {
   lastError: null,
   processed: 0,
 };
+
+/**
+ * In-flight `claude login` subprocess state.
+ * Only one login attempt at a time.
+ */
+export interface ClaudeAuthState {
+  running: boolean;
+  url: string | null;
+  startedAt: number | null;
+  error: string | null;
+  // Result of the last probe (claude --print "ok")
+  authenticated: boolean | null;
+  authenticatedAt: number | null;
+  probeError: string | null;
+}
+
+export const claudeAuth: ClaudeAuthState = {
+  running: false,
+  url: null,
+  startedAt: null,
+  error: null,
+  authenticated: null,
+  authenticatedAt: null,
+  probeError: null,
+};
