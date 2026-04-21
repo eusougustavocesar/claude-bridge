@@ -15,6 +15,13 @@ import makeWASocket, {
   type WASocket,
 } from "@whiskeysockets/baileys";
 
+import { state as bridgeState } from "./http/state.js";
+import {
+  createHttpServer,
+  readEnvFile,
+  writeEnvFile,
+} from "./http/server.js";
+
 // ============================================================================
 // Config (env)
 // ============================================================================
@@ -48,6 +55,11 @@ const ALLOWED_JIDS = (envFromFile.ALLOWED_JIDS ?? "")
 const RATE_LIMIT_MAX = Number(envFromFile.RATE_LIMIT_MAX) || 10;
 const RATE_LIMIT_WINDOW_MS =
   (Number(envFromFile.RATE_LIMIT_WINDOW_SECONDS) || 60) * 1000;
+
+const HTTP_ENABLED =
+  (envFromFile.HTTP_ENABLED ?? "true").toLowerCase() !== "false";
+const HTTP_HOST = envFromFile.HTTP_HOST ?? "127.0.0.1";
+const HTTP_PORT = Number(envFromFile.HTTP_PORT) || 3737;
 
 const AUDIT_LOG = join(REPO_ROOT, "logs", "audit.jsonl");
 
@@ -118,24 +130,42 @@ async function main() {
   sock.ev.on("connection.update", (update) => {
     const { connection, lastDisconnect, qr } = update;
     if (qr) {
+      bridgeState.connection = "pairing";
+      bridgeState.qr = qr;
       const pngPath = "/tmp/claude-bridge-qr.png";
       qrPng
         .toFile(pngPath, qr, { scale: 10, margin: 2 })
-        .then(() => console.log(`\nQR also saved as PNG: ${pngPath}`))
+        .then(() =>
+          console.log(
+            `\nQR also saved as PNG: ${pngPath}\nOr scan in the browser: http://${HTTP_HOST}:${HTTP_PORT}/pair`
+          )
+        )
         .catch((err) => console.error("PNG save failed:", err));
       console.log("\nScan this QR with your WhatsApp mobile app:");
       console.log("(WhatsApp > Settings > Linked Devices > Link a Device)\n");
       qrcode.generate(qr);
     }
     if (connection === "open") {
+      bridgeState.connection = "connected";
+      bridgeState.qr = null;
+      bridgeState.me = {
+        id: sock.user?.id ?? "",
+        name: sock.user?.name ?? null,
+      };
+      bridgeState.lastError = null;
       logger.info(
         { me: sock.user?.id, name: sock.user?.name },
         "Connected to WhatsApp"
       );
     }
+    if (connection === "connecting") {
+      bridgeState.connection = "connecting";
+    }
     if (connection === "close") {
+      bridgeState.connection = "disconnected";
       const statusCode = (lastDisconnect?.error as any)?.output?.statusCode;
       const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+      bridgeState.lastError = `statusCode ${statusCode}`;
       logger.warn({ statusCode, shouldReconnect }, "Connection closed");
       if (shouldReconnect) {
         setTimeout(main, 3000);
@@ -263,6 +293,8 @@ async function handleMessage(sock: WASocket, msg: WAMessage) {
   for (const chunk of chunkText(answer, 3900)) {
     await sock.sendMessage(jid, { text: chunk });
   }
+
+  bridgeState.processed += 1;
 }
 
 function chunkText(text: string, size: number): string[] {
@@ -396,16 +428,31 @@ function loadEnvFile(): Record<string, string> {
 // Entrypoint
 // ============================================================================
 
+// ============================================================================
+// Entrypoint
+// ============================================================================
+
+// Start HTTP admin server (optional)
+let httpServerInstance: { close: () => void } | null = null;
+if (HTTP_ENABLED) {
+  httpServerInstance = createHttpServer({
+    host: HTTP_HOST,
+    port: HTTP_PORT,
+    readEnv: readEnvFile,
+    writeEnv: writeEnvFile,
+    onStop: () => logger.warn("stop requested via HTTP"),
+  });
+}
+
 main().catch((err) => {
   logger.error({ err }, "Fatal error");
   process.exit(1);
 });
 
-process.on("SIGTERM", () => {
-  logger.info("SIGTERM received, shutting down");
+const gracefulShutdown = (signal: string) => {
+  logger.info({ signal }, "signal received, shutting down");
+  httpServerInstance?.close();
   process.exit(0);
-});
-process.on("SIGINT", () => {
-  logger.info("SIGINT received, shutting down");
-  process.exit(0);
-});
+};
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
