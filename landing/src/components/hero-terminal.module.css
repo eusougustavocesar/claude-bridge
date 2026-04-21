@@ -1,0 +1,170 @@
+/*
+ * Pure-CSS typewriter animation. Repeats every 9s.
+ * Timeline:
+ *   0.0s – 2.5s  prompt types out char-by-char + cursor blinks
+ *   2.5s – 4.0s  prompt idle
+ *   4.0s – 6.0s  typing indicator (·  ·  ·)
+ *   6.0s – 9.0s  response fades in, stays visible
+ *   9.0s         loop
+ */
+
+.line {
+  display: flex;
+  align-items: baseline;
+  min-height: 1.5em;
+}
+
+/* ---------- Prompt typing ---------- */
+
+.prompt {
+  margin-bottom: 1rem;
+}
+
+.typed {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  width: 0;
+  animation: cm-type 9s steps(12, end) infinite;
+}
+
+@keyframes cm-type {
+  0% {
+    width: 0;
+  }
+  25% {
+    width: 12ch;
+  }
+  /* stay visible for the rest of the loop */
+  100% {
+    width: 12ch;
+  }
+}
+
+/* Cursor: blinks while typing, disappears after */
+.cursor {
+  display: inline-block;
+  width: 0.5ch;
+  height: 1em;
+  background: var(--foreground);
+  margin-left: 2px;
+  vertical-align: -0.12em;
+  animation: cm-blink 0.8s steps(2, end) infinite,
+    cm-hide 9s linear infinite;
+}
+
+@keyframes cm-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes cm-hide {
+  0%,
+  40% {
+    opacity: 1;
+  }
+  41%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---------- Typing indicator ---------- */
+
+.typing {
+  opacity: 0;
+  animation: cm-typing 9s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes cm-typing {
+  0%,
+  42% {
+    opacity: 0;
+  }
+  45%,
+  65% {
+    opacity: 1;
+  }
+  68%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.dots {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: 4px;
+}
+.dots > span {
+  animation: cm-dot 1.2s ease-in-out infinite;
+}
+.dots > span:nth-child(1) {
+  animation-delay: 0s;
+}
+.dots > span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.dots > span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes cm-dot {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateY(-2px);
+    opacity: 1;
+  }
+}
+
+/* ---------- Response reveal ---------- */
+
+.response {
+  opacity: 0;
+  transform: translateY(4px);
+  animation: cm-response 9s ease-out infinite;
+}
+
+@keyframes cm-response {
+  0%,
+  68% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  72%,
+  95% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+/* Respect motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .typed,
+  .cursor,
+  .typing,
+  .response {
+    animation: none;
+  }
+  .typed {
+    width: 12ch;
+  }
+  .cursor {
+    display: none;
+  }
+  .typing,
+  .response {
+    opacity: 1;
+    transform: none;
+  }
+}
