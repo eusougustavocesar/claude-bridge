@@ -1,9 +1,8 @@
 import { Hono } from "hono";
-import { serveStatic } from "hono/serve-static";
 import { serve } from "@hono/node-server";
 import { existsSync, readFileSync, writeFileSync, statSync } from "node:fs";
 import { readFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { join, resolve, extname } from "node:path";
 import pino from "pino";
 import { state } from "./state.js";
 
@@ -113,40 +112,30 @@ export function createHttpServer(opts: HttpServerOptions) {
   });
 
   // ----- Static web UI --------------------------------------------------
-  // Serve web/out/ (Next.js static export) if present. Fallback to a
-  // friendly JSON when the UI hasn't been built yet.
+  // Serve web/out/ (Next.js static export) if present. We roll our own
+  // handler instead of Hono's serveStatic because `path.join(root, "/...")`
+  // treats the leading slash as absolute and escapes the root.
 
   if (existsSync(WEB_DIST)) {
-    app.use(
-      "/*",
-      serveStatic({
-        root: WEB_DIST,
-        getContent: async (path) => {
-          const full = join(WEB_DIST, path);
-          if (!existsSync(full)) return null;
-          try {
-            if (statSync(full).isDirectory()) {
-              const indexPath = join(full, "index.html");
-              if (existsSync(indexPath)) return await readFile(indexPath);
-              return null;
-            }
-            return await readFile(full);
-          } catch {
-            return null;
-          }
-        },
-      })
-    );
-
-    // Fallback for client-side routes (SPA-style)
     app.get("*", async (c) => {
-      const indexPath = join(WEB_DIST, "index.html");
-      if (existsSync(indexPath)) {
-        return c.body(await readFile(indexPath), 200, {
-          "content-type": "text/html; charset=utf-8",
-        });
+      const result = resolveStaticFile(c.req.path);
+      if (!result) {
+        // Try 404.html from Next.js export, else JSON fallback
+        const notFoundPath = join(WEB_DIST, "404.html");
+        if (existsSync(notFoundPath)) {
+          return c.body(await readFile(notFoundPath), 404, {
+            "content-type": "text/html; charset=utf-8",
+          });
+        }
+        return c.json({ error: "not found" }, 404);
       }
-      return c.json({ message: "UI not built" }, 404);
+      const body = await readFile(result.path);
+      return c.body(body, 200, {
+        "content-type": result.contentType,
+        "cache-control": result.immutable
+          ? "public, max-age=31536000, immutable"
+          : "no-cache",
+      });
     });
   } else {
     app.get("/", (c) =>
@@ -179,6 +168,67 @@ export function createHttpServer(opts: HttpServerOptions) {
       logger.info("HTTP server closed");
     },
   };
+}
+
+// ----- Static file resolver (for Next.js static export) --------------
+
+const MIME: Record<string, string> = {
+  ".html": "text/html; charset=utf-8",
+  ".js": "application/javascript; charset=utf-8",
+  ".mjs": "application/javascript; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".svg": "image/svg+xml",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".webp": "image/webp",
+  ".ico": "image/x-icon",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2",
+  ".ttf": "font/ttf",
+  ".otf": "font/otf",
+  ".txt": "text/plain; charset=utf-8",
+  ".map": "application/json; charset=utf-8",
+};
+
+function resolveStaticFile(
+  urlPath: string
+): { path: string; contentType: string; immutable: boolean } | null {
+  // Strip leading slash, query, hash
+  const clean = urlPath.replace(/^\/+/, "").split(/[?#]/)[0];
+
+  // Candidates in order:
+  // 1. exact file (with extension like js/css/png)
+  // 2. <path>/index.html (for route dirs like /pair/)
+  // 3. <path>.html (for extensionless routes like /pair)
+  const candidates: string[] = [];
+  candidates.push(clean === "" ? "index.html" : clean);
+  if (!extname(clean)) {
+    const base = clean.replace(/\/+$/, "");
+    candidates.push(base ? `${base}/index.html` : "index.html");
+    candidates.push(base ? `${base}.html` : "index.html");
+  }
+
+  for (const c of candidates) {
+    const full = join(WEB_DIST, c);
+    // Prevent path traversal: final path must stay inside WEB_DIST
+    if (!full.startsWith(WEB_DIST)) continue;
+    if (!existsSync(full)) continue;
+    try {
+      const stat = statSync(full);
+      if (stat.isDirectory()) continue;
+      const ext = extname(full).toLowerCase();
+      const ct = MIME[ext] ?? "application/octet-stream";
+      // Fingerprinted Next.js assets (in /_next/static/) are safe to cache immutably
+      const immutable = full.includes(`${"_next"}/static/`);
+      return { path: full, contentType: ct, immutable };
+    } catch {
+      continue;
+    }
+  }
+  return null;
 }
 
 // ----- Minimal .env read/write helpers (shared with bot.ts) -----------
