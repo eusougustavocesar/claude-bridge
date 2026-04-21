@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { Nav } from "@/components/nav";
+import { GridOverlay } from "@/components/layout/grid-overlay";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -30,12 +31,15 @@ export default function RootLayout({
       lang="en"
       className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
+      <body className="min-h-full bg-background text-foreground font-sans">
         <Nav />
-        <main className="flex-1 mx-auto w-full max-w-5xl px-6 py-8">
+        {/* pt-14 reserves space for the 56px fixed header, pt-8 is the
+            page's own top breathing room */}
+        <main className="w-full px-6 pt-[calc(theme(spacing.14)+theme(spacing.8))] pb-12">
           {children}
         </main>
         <Toaster position="top-right" />
+        <GridOverlay />
       </body>
     </html>
   );

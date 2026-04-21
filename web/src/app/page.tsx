@@ -6,6 +6,7 @@ import { StatusIndicator } from "@/components/status-indicator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Page, PageHeader, Grid } from "@/components/layout/page";
 import { formatUptime, api } from "@/lib/api";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -42,32 +43,30 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">
-            Status and controls for the claude-bridge daemon.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          {status?.hasQr ? (
-            <Link href="/pair" className={buttonVariants({ size: "sm" })}>
-              Scan pairing QR →
-            </Link>
-          ) : null}
-          <Button
-            onClick={handleStop}
-            disabled={stopping || !status}
-            variant="outline"
-            size="sm"
-          >
-            {stopping ? "Stopping…" : "Stop daemon"}
-          </Button>
-        </div>
-      </header>
+    <Page>
+      <PageHeader
+        title="Dashboard"
+        description="Status and controls for the claude-bridge daemon."
+        actions={
+          <>
+            {status?.hasQr ? (
+              <Link href="/pair" className={buttonVariants({ size: "sm" })}>
+                Scan pairing QR →
+              </Link>
+            ) : null}
+            <Button
+              onClick={handleStop}
+              disabled={stopping || !status}
+              variant="outline"
+              size="sm"
+            >
+              {stopping ? "Stopping…" : "Stop daemon"}
+            </Button>
+          </>
+        }
+      />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <Grid cols={{ base: 1, sm: 2, lg: 3 }} gap={4}>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">
@@ -127,7 +126,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="sm:col-span-2">
+        <Card className="sm:col-span-2 lg:col-span-3">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">
               Last error
@@ -143,9 +142,9 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
-      </div>
+      </Grid>
 
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <Grid cols={{ base: 1, md: 2 }} gap={4}>
         <Card>
           <CardHeader>
             <CardTitle className="text-sm">Pairing</CardTitle>
@@ -182,7 +181,7 @@ export default function Dashboard() {
             </Link>
           </CardContent>
         </Card>
-      </section>
-    </div>
+      </Grid>
+    </Page>
   );
 }

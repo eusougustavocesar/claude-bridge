@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Page, PageHeader } from "@/components/layout/page";
 
 export function PageStub({
   title,
@@ -8,10 +9,8 @@ export function PageStub({
   description: string;
 }) {
   return (
-    <div className="flex flex-col gap-6">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-      </header>
+    <Page>
+      <PageHeader title={title} />
       <Card>
         <CardHeader>
           <CardTitle className="text-sm uppercase tracking-wider text-muted-foreground">
@@ -22,6 +21,6 @@ export function PageStub({
           <p className="text-sm text-muted-foreground">{description}</p>
         </CardContent>
       </Card>
-    </div>
+    </Page>
   );
 }
