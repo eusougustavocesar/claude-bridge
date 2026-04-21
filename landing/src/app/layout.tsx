@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const SITE_URL = "https://claude-bridge.vercel.app";
+const SITE_URL = "https://bridge-claude.vercel.app";
 const DESCRIPTION =
   "Persistent bridge between Claude Code and messaging channels. WhatsApp first, more soon. Mac stays closed, Claude keeps working.";
 
