@@ -68,7 +68,7 @@ function Hero() {
             <p className="text-lg text-muted-foreground">
               <b className="text-foreground">Reverb</b> is a lightweight daemon
               that connects any messaging channel to your AI CLI. Close your
-              laptop — your AI keeps working.
+              laptop. Your AI keeps working.
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
@@ -236,7 +236,7 @@ function Features() {
           {/* Small — Audit log */}
           <BentoCard
             title="Hashed audit log"
-            body="Every processed message recorded. JIDs are SHA-256 hashes — never phone numbers."
+            body="Every processed message recorded. JIDs are SHA-256 hashes, never phone numbers."
           />
         </div>
       </div>
@@ -306,7 +306,7 @@ bash scripts/install.sh`,
     {
       n: "02",
       title: "Pair your phone",
-      body: "Scan a QR once. Baileys connects as a WhatsApp linked device — same protocol as WhatsApp Web. Auth persists across reboots.",
+      body: "Scan a QR once. Baileys connects as a WhatsApp linked device, same protocol as WhatsApp Web. Auth persists across reboots.",
       code: `npm run pair
 # → QR renders in terminal
 # → WhatsApp > Settings > Linked Devices > Link a Device`,
@@ -314,7 +314,7 @@ bash scripts/install.sh`,
     },
     {
       n: "03",
-      title: "Start the daemon — close your Mac",
+      title: "Start the daemon. Close your Mac.",
       body: "LaunchAgent takes over. Auto-start on boot, auto-reconnect, ~50 MB RAM. Message yourself on WhatsApp, Claude replies.",
       code: `launchctl bootstrap gui/$(id -u) \\
   ~/Library/LaunchAgents/com.$(whoami).reverb.plist

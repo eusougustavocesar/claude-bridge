@@ -29,7 +29,7 @@ export function CreatorQuote() {
                 claude --print
               </code>{" "}
               per message, runs as a LaunchAgent, uses my existing Claude
-              subscription. Mac can be closed — phone still gets replies.
+              subscription. Mac can be closed. Phone still gets replies.
             </span>
           </blockquote>
 

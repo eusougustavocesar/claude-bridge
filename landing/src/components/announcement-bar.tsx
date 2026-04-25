@@ -17,7 +17,7 @@ export function AnnouncementBar() {
           >
             v0.1.0
           </span>{" "}
-          just shipped —
+          just shipped.
         </span>
         <Link
           href="https://github.com/eusougustavocesar/reverb/releases/tag/v0.1.0"

@@ -12,35 +12,35 @@ const GH_ISSUES =
 const items = [
   {
     q: "Does it use my Claude Code subscription or require an API key?",
-    a: "Your existing Claude Code subscription — no API key, no extra billing. The daemon spawns `claude --print` as a subprocess, which uses your locally authenticated session just like you would in a terminal.",
+    a: "Your existing Claude Code subscription, no API key, no extra billing. The daemon spawns `claude --print` as a subprocess, which uses your locally authenticated session just like you would in a terminal.",
   },
   {
     q: "Can WhatsApp ban my number?",
-    a: "Possible but historically rare for personal use. reverb uses the WhatsApp multidevice protocol via Baileys (same transport as WhatsApp Web). WhatsApp's ToS doesn't officially bless programmatic clients. For high-volume or commercial use, pair a dedicated number — not your main line.",
+    a: "Possible but historically rare for personal use. reverb uses the WhatsApp multidevice protocol via Baileys (same transport as WhatsApp Web). WhatsApp's ToS doesn't officially bless programmatic clients. For high-volume or commercial use, pair a dedicated number, not your main line.",
   },
   {
     q: "Is it secure? Can someone on my network control it?",
-    a: "The admin HTTP server binds to 127.0.0.1 only — never exposed to the network. Claude Code runs sandboxed to a scoped working directory (never $HOME by default). Per-chat rate limiting prevents runaway loops. Audit log stores SHA-256 hashes, never phone numbers.",
+    a: "The admin HTTP server binds to 127.0.0.1 only, never exposed to the network. Claude Code runs sandboxed to a scoped working directory (never $HOME by default). Per-chat rate limiting prevents runaway loops. Audit log stores SHA-256 hashes, never phone numbers.",
   },
   {
     q: "Does it work on Linux or just macOS?",
-    a: "v0.1 ships with a macOS LaunchAgent installer. The daemon itself is pure Node — any Linux with Node 20+ can run it via `npm run start` or nohup. A proper systemd unit is on the v0.3 roadmap.",
+    a: "v0.1 ships with a macOS LaunchAgent installer. The daemon itself is pure Node, any Linux with Node 20+ can run it via `npm run start` or nohup. A proper systemd unit is on the v0.3 roadmap.",
   },
   {
     q: "What happens when my Mac sleeps?",
-    a: "WhatsApp socket disconnects, daemon auto-reconnects when the Mac wakes. For true 24/7 availability, run the daemon on a mini-server or Linux VPS — it's one Node process.",
+    a: "WhatsApp socket disconnects, daemon auto-reconnects when the Mac wakes. For true 24/7 availability, run the daemon on a mini-server or Linux VPS. It's one Node process.",
   },
   {
     q: "Can I use it with Claude Code Max or team plans?",
-    a: "Yes — the daemon is agnostic to your plan. Whatever `claude --print` supports, reverb supports.",
+    a: "Yes. The daemon is agnostic to your plan. Whatever `claude --print` supports, reverb supports.",
   },
   {
     q: "Why not use the official Anthropic plugin marketplace?",
-    a: "The official WhatsApp channel plugin only runs inside the Claude Code process. Close Claude Code and the bridge dies. reverb is a separate daemon — that's the whole point.",
+    a: "The official WhatsApp channel plugin only runs inside the Claude Code process. Close Claude Code and the bridge dies. reverb is a separate daemon. That's the whole point.",
   },
   {
     q: "Will there be more channels (Telegram, Signal)?",
-    a: "Telegram is the next planned channel. Signal and Discord are on the roadmap. The daemon architecture is channel-agnostic — adapters plug in.",
+    a: "Telegram is the next planned channel. Signal and Discord are on the roadmap. The daemon architecture is channel-agnostic, adapters plug in.",
   },
 ];
 
