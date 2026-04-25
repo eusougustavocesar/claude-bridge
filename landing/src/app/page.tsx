@@ -88,15 +88,6 @@ function Hero() {
               </Link>
             </div>
 
-            <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs font-mono text-muted-foreground">
-              <span>MIT licensed</span>
-              <span>·</span>
-              <span>~50 MB RAM</span>
-              <span>·</span>
-              <span>macOS (Linux soon)</span>
-              <span>·</span>
-              <span>no cloud, no telemetry</span>
-            </div>
           </div>
 
           {/* Right: demo GIF */}
