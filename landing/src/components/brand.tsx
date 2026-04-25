@@ -22,7 +22,7 @@ export function BrandLogo({
           fillOpacity="0.85"
         />
       </svg>
-      {showWord ? <span>reverb</span> : null}
+      {showWord ? <span>Reverb</span> : null}
     </span>
   );
 }

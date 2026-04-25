@@ -10,7 +10,7 @@ export function AnnouncementBar() {
           aria-hidden
         />
         <span className="text-muted-foreground">
-          reverb{" "}
+          Reverb{" "}
           <span
             className="font-mono font-medium"
             style={{ color: "var(--brand)" }}

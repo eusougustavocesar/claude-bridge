@@ -77,7 +77,7 @@ function Hero() {
         </h1>
 
         <p className="max-w-2xl text-lg text-muted-foreground">
-          <b className="text-foreground">reverb</b> is a lightweight daemon
+          <b className="text-foreground">Reverb</b> is a lightweight daemon
           that connects any messaging channel to your AI CLI. Close your laptop
           — your AI keeps working.
         </p>

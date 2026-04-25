@@ -11,7 +11,7 @@ interface Row {
 }
 
 const ROWS: Row[] = [
-  { name: "reverb", minutes: 2, note: "1 script", highlight: true },
+  { name: "Reverb", minutes: 2, note: "1 script", highlight: true },
   { name: "Rich627 plugin", minutes: 3, note: "but dies w/ Claude Code" },
   { name: "osisdie + Docker", minutes: 12, note: "+ 2–4 GB RAM idle" },
   { name: "n8n + webhook", minutes: 25, note: "flow + auth + server" },

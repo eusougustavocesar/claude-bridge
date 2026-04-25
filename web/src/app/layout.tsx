@@ -16,9 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "reverb admin",
+  title: "Reverb admin",
   description:
-    "Admin UI for reverb — connect your AI CLI to any messaging channel.",
+    "Admin UI for Reverb — connect your AI CLI to any messaging channel.",
   icons: {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml" },

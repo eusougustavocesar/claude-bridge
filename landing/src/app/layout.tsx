@@ -19,8 +19,8 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "reverb — connect your AI CLI to any channel",
-    template: "%s · reverb",
+    default: "Reverb — connect your AI CLI to any channel",
+    template: "%s · Reverb",
   },
   description: DESCRIPTION,
   keywords: [
@@ -43,21 +43,21 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: SITE_URL,
-    title: "reverb — connect your AI CLI to any channel",
+    title: "Reverb — connect your AI CLI to any channel",
     description: DESCRIPTION,
-    siteName: "reverb",
+    siteName: "Reverb",
     images: [
       {
         url: "/og.png",
         width: 1280,
         height: 640,
-        alt: "reverb",
+        alt: "Reverb",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "reverb",
+    title: "Reverb",
     description: DESCRIPTION,
     images: ["/og.png"],
   },
