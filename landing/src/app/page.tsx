@@ -46,84 +46,75 @@ export default function Home() {
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden border-b border-border">
-      <div
-        aria-hidden
-        className="absolute inset-0 opacity-[0.035]"
-        style={{
-          backgroundImage:
-            "linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)",
-          backgroundSize: "64px 64px",
-        }}
-      />
-      <div
-        aria-hidden
-        className="absolute left-1/2 -translate-x-1/2 top-0 w-[700px] h-[700px] rounded-full blur-3xl opacity-[0.08] pointer-events-none"
-        style={{ background: "var(--brand)" }}
-      />
+    <section className="border-b border-border">
+      <div className="mx-auto max-w-5xl px-6 pt-20 pb-20">
+        <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
 
-      <div className="relative mx-auto max-w-5xl px-6 pt-24 pb-20 flex flex-col items-center text-center gap-8">
-        <Badge
-          variant="outline"
-          className="font-mono text-[11px] tracking-wider uppercase"
-        >
-          v0.1.0 · early access
-        </Badge>
+          {/* Left: text */}
+          <div className="flex flex-col gap-7">
+            <Badge
+              variant="outline"
+              className="font-mono text-[11px] tracking-wider uppercase self-start"
+            >
+              v0.1.0 · early access
+            </Badge>
 
-        <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight max-w-4xl leading-[1.05]">
-          Your AI CLI,
-          <br />
-          <span className="text-muted-foreground">one message away.</span>
-        </h1>
+            <h1 className="text-5xl sm:text-6xl font-bold tracking-tight leading-[1.05]">
+              Your AI CLI,
+              <br />
+              <span className="text-muted-foreground">one message away.</span>
+            </h1>
 
-        <p className="max-w-2xl text-lg text-muted-foreground">
-          <b className="text-foreground">Reverb</b> is a lightweight daemon
-          that connects any messaging channel to your AI CLI. Close your laptop
-          — your AI keeps working.
-        </p>
+            <p className="text-lg text-muted-foreground">
+              <b className="text-foreground">Reverb</b> is a lightweight daemon
+              that connects any messaging channel to your AI CLI. Close your
+              laptop — your AI keeps working.
+            </p>
 
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          <a
-            href={GH}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={buttonVariants({ size: "lg" })}
-          >
-            ⭐ Star on GitHub
-          </a>
-          <Link
-            href="#install"
-            className={buttonVariants({ variant: "outline", size: "lg" })}
-          >
-            Quickstart
-          </Link>
-        </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <a
+                href={GH}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonVariants({ size: "lg" })}
+              >
+                ⭐ Star on GitHub
+              </a>
+              <Link
+                href="#install"
+                className={buttonVariants({ variant: "outline", size: "lg" })}
+              >
+                Quickstart
+              </Link>
+            </div>
 
-        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs font-mono text-muted-foreground mt-2">
-          <span>MIT licensed</span>
-          <span>·</span>
-          <span>~50 MB RAM</span>
-          <span>·</span>
-          <span>macOS (Linux soon)</span>
-          <span>·</span>
-          <span>no cloud, no telemetry</span>
-        </div>
-
-        {/* Side-by-side on md+: phone demo GIF + animated terminal.
-            Stacked on mobile. */}
-        <div className="relative mt-8 flex flex-col md:flex-row md:items-center gap-6 md:gap-8 w-full justify-center">
-          <div className="rounded-2xl border border-border bg-card/40 p-3 shadow-2xl shadow-black/40 shrink-0">
-            <Image
-              src="/demo.gif"
-              alt="Sending a prompt from WhatsApp, Claude replies — Mac is asleep the whole time."
-              width={300}
-              height={354}
-              className="rounded-lg"
-              unoptimized
-              priority
-            />
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs font-mono text-muted-foreground">
+              <span>MIT licensed</span>
+              <span>·</span>
+              <span>~50 MB RAM</span>
+              <span>·</span>
+              <span>macOS (Linux soon)</span>
+              <span>·</span>
+              <span>no cloud, no telemetry</span>
+            </div>
           </div>
-          <HeroTerminal />
+
+          {/* Right: demo GIF + terminal */}
+          <div className="flex flex-col items-center gap-4">
+            <div className="rounded-2xl border border-border bg-card/40 p-3 shadow-2xl shadow-black/40 shrink-0">
+              <Image
+                src="/demo.gif"
+                alt="Sending a prompt from WhatsApp, Claude replies — Mac is asleep the whole time."
+                width={300}
+                height={354}
+                className="rounded-lg"
+                unoptimized
+                priority
+              />
+            </div>
+            <HeroTerminal />
+          </div>
+
         </div>
       </div>
     </section>
