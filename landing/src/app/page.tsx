@@ -99,20 +99,17 @@ function Hero() {
             </div>
           </div>
 
-          {/* Right: demo GIF + terminal */}
-          <div className="flex flex-col items-center gap-4">
-            <div className="rounded-2xl border border-border bg-card/40 p-3 shadow-2xl shadow-black/40 shrink-0">
-              <Image
-                src="/demo.gif"
-                alt="Sending a prompt from WhatsApp, Claude replies — Mac is asleep the whole time."
-                width={300}
-                height={354}
-                className="rounded-lg"
-                unoptimized
-                priority
-              />
-            </div>
-            <HeroTerminal />
+          {/* Right: demo GIF */}
+          <div className="flex justify-center">
+            <Image
+              src="/demo.gif"
+              alt="Sending a prompt from WhatsApp, Claude replies — Mac is asleep the whole time."
+              width={300}
+              height={354}
+              className="rounded-xl"
+              unoptimized
+              priority
+            />
           </div>
 
         </div>
