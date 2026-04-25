@@ -1,5 +1,5 @@
 /**
- * Typed client for the claude-bridge HTTP admin API.
+ * Typed client for the reverb HTTP admin API.
  * All requests go to /api/* which is either the same origin (prod,
  * static export served by the daemon) or proxied via next.config.ts (dev).
  */

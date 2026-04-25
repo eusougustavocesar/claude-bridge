@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/accordion";
 
 const GH_ISSUES =
-  "https://github.com/eusougustavocesar/claude-bridge/issues/new";
+  "https://github.com/eusougustavocesar/reverb/issues/new";
 
 const items = [
   {
@@ -16,7 +16,7 @@ const items = [
   },
   {
     q: "Can WhatsApp ban my number?",
-    a: "Possible but historically rare for personal use. claude-bridge uses the WhatsApp multidevice protocol via Baileys (same transport as WhatsApp Web). WhatsApp's ToS doesn't officially bless programmatic clients. For high-volume or commercial use, pair a dedicated number — not your main line.",
+    a: "Possible but historically rare for personal use. reverb uses the WhatsApp multidevice protocol via Baileys (same transport as WhatsApp Web). WhatsApp's ToS doesn't officially bless programmatic clients. For high-volume or commercial use, pair a dedicated number — not your main line.",
   },
   {
     q: "Is it secure? Can someone on my network control it?",
@@ -32,11 +32,11 @@ const items = [
   },
   {
     q: "Can I use it with Claude Code Max or team plans?",
-    a: "Yes — the daemon is agnostic to your plan. Whatever `claude --print` supports, claude-bridge supports.",
+    a: "Yes — the daemon is agnostic to your plan. Whatever `claude --print` supports, reverb supports.",
   },
   {
     q: "Why not use the official Anthropic plugin marketplace?",
-    a: "The official WhatsApp channel plugin only runs inside the Claude Code process. Close Claude Code and the bridge dies. claude-bridge is a separate daemon — that's the whole point.",
+    a: "The official WhatsApp channel plugin only runs inside the Claude Code process. Close Claude Code and the bridge dies. reverb is a separate daemon — that's the whole point.",
   },
   {
     q: "Will there be more channels (Telegram, Signal)?",

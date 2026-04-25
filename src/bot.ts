@@ -121,7 +121,7 @@ async function main() {
   const sock: WASocket = makeWASocket({
     auth: state,
     version,
-    browser: ["claude-bridge", "Chrome", "1.0.0"],
+    browser: ["reverb", "Chrome", "1.0.0"],
     logger: pino({ level: "silent" }) as any,
   });
 
@@ -132,7 +132,7 @@ async function main() {
     if (qr) {
       bridgeState.connection = "pairing";
       bridgeState.qr = qr;
-      const pngPath = "/tmp/claude-bridge-qr.png";
+      const pngPath = "/tmp/reverb-qr.png";
       qrPng
         .toFile(pngPath, qr, { scale: 10, margin: 2 })
         .then(() =>
@@ -239,7 +239,7 @@ async function handleMessage(sock: WASocket, msg: WAMessage) {
   // Kill switch
   if (text.trim() === "/stop" && matchesSelf) {
     await sock.sendMessage(jid, {
-      text: "🛑 claude-bridge stopping. Use `launchctl kickstart` (macOS) or `systemctl restart` (Linux) to bring it back.",
+      text: "🛑 reverb stopping. Use `launchctl kickstart` (macOS) or `systemctl restart` (Linux) to bring it back.",
     });
     logger.warn("Kill switch activated via /stop");
     process.exit(0);
@@ -249,7 +249,7 @@ async function handleMessage(sock: WASocket, msg: WAMessage) {
   if (text.trim() === "/help") {
     await sock.sendMessage(jid, {
       text: [
-        "claude-bridge commands:",
+        "reverb commands:",
         "• Any text → sent to Claude Code",
         "• /help → this message",
         "• /stop → shut down the bridge",
@@ -376,9 +376,9 @@ function ensureSandbox() {
     const claudeMd = join(CLAUDE_CWD, "CLAUDE.md");
     if (!existsSync(claudeMd)) {
       const content = [
-        "# claude-bridge sandbox",
+        "# reverb sandbox",
         "",
-        "This directory is the sandbox for the claude-bridge daemon.",
+        "This directory is the sandbox for the reverb daemon.",
         "Claude Code has read/write access ONLY to files inside this directory.",
         "It cannot access files outside of it unless `CLAUDE_CWD` is reconfigured.",
         "",

@@ -163,7 +163,7 @@ export default function ConfigPage() {
       <footer className="flex items-center justify-between border-t border-border pt-4">
         <p className="text-xs text-muted-foreground">
           Writing to{" "}
-          <code className="font-mono">{"~/claude-bridge/.env"}</code> —
+          <code className="font-mono">{"~/reverb/.env"}</code> —
           comments are preserved.
         </p>
         <Button type="submit" disabled={saving} size="sm">

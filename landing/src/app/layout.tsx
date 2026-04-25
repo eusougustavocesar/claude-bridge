@@ -14,24 +14,24 @@ const geistMono = Geist_Mono({
 
 const SITE_URL = "https://bridge-claude.vercel.app";
 const DESCRIPTION =
-  "Persistent bridge between Claude Code and messaging channels. WhatsApp first, more soon. Mac stays closed, Claude keeps working.";
+  "Connect your AI CLI to any messaging channel. WhatsApp first, more soon. Mac stays closed, your AI keeps working.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "claude-bridge — persistent Claude Code over WhatsApp",
-    template: "%s · claude-bridge",
+    default: "reverb — connect your AI CLI to any channel",
+    template: "%s · reverb",
   },
   description: DESCRIPTION,
   keywords: [
+    "reverb",
+    "ai-cli",
     "claude code",
-    "claude",
-    "anthropic",
     "whatsapp",
     "baileys",
     "launchagent",
-    "ai",
     "daemon",
+    "gemini-cli",
   ],
   icons: {
     icon: [
@@ -43,21 +43,21 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: SITE_URL,
-    title: "claude-bridge — persistent Claude Code over WhatsApp",
+    title: "reverb — connect your AI CLI to any channel",
     description: DESCRIPTION,
-    siteName: "claude-bridge",
+    siteName: "reverb",
     images: [
       {
         url: "/og.png",
         width: 1280,
         height: 640,
-        alt: "claude-bridge",
+        alt: "reverb",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "claude-bridge",
+    title: "reverb",
     description: DESCRIPTION,
     images: ["/og.png"],
   },

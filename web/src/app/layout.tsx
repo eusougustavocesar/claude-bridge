@@ -16,9 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "claude-bridge admin",
+  title: "reverb admin",
   description:
-    "Admin UI for claude-bridge — persistent Claude Code across messaging channels.",
+    "Admin UI for reverb — connect your AI CLI to any messaging channel.",
   icons: {
     icon: [
       { url: "/favicon.svg", type: "image/svg+xml" },

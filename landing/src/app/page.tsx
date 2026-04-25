@@ -14,7 +14,7 @@ import { SetupTimeChart } from "@/components/setup-time-chart";
 import { HeroTerminal } from "@/components/hero-terminal";
 import { StickyInstallBar } from "@/components/sticky-install-bar";
 
-const GH = "https://github.com/eusougustavocesar/claude-bridge";
+const GH = "https://github.com/eusougustavocesar/reverb";
 const GH_DOCS = `${GH}/tree/main/docs`;
 const GH_WHY = `${GH}/blob/main/docs/why-persistence.md`;
 const GH_RELEASE = `${GH}/releases/tag/v0.1.0`;
@@ -71,18 +71,15 @@ function Hero() {
         </Badge>
 
         <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight max-w-4xl leading-[1.05]">
-          Persistent Claude Code,
+          Your AI CLI,
           <br />
-          <span className="text-muted-foreground">one WhatsApp away.</span>
+          <span className="text-muted-foreground">one message away.</span>
         </h1>
 
         <p className="max-w-2xl text-lg text-muted-foreground">
-          <b className="text-foreground">claude-bridge</b> is a lightweight
-          daemon that runs on your Mac and forwards WhatsApp messages to{" "}
-          <code className="font-mono text-sm bg-muted px-1.5 py-0.5 rounded">
-            claude --print
-          </code>
-          . Close your laptop — Claude keeps working.
+          <b className="text-foreground">reverb</b> is a lightweight daemon
+          that connects any messaging channel to your AI CLI. Close your laptop
+          — your AI keeps working.
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-3">
@@ -177,8 +174,8 @@ function Why() {
           ))}
         </div>
         <p className="mt-10 text-sm text-muted-foreground max-w-2xl">
-          claude-bridge is a separate process that holds the WhatsApp socket
-          alive and spawns{" "}
+          reverb is a separate process that holds the WhatsApp socket alive
+          and spawns{" "}
           <code className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
             claude --print
           </code>{" "}
@@ -321,8 +318,8 @@ function HowItWorks() {
       n: "01",
       title: "Install the daemon",
       body: "Clone, build, and generate a LaunchAgent plist. One script. No Docker, no Twilio, no API keys.",
-      code: `git clone https://github.com/eusougustavocesar/claude-bridge.git
-cd claude-bridge
+      code: `git clone https://github.com/eusougustavocesar/reverb.git
+cd reverb
 npm install && npm run build
 bash scripts/install.sh`,
       lang: "bash",
@@ -341,7 +338,7 @@ bash scripts/install.sh`,
       title: "Start the daemon — close your Mac",
       body: "LaunchAgent takes over. Auto-start on boot, auto-reconnect, ~50 MB RAM. Message yourself on WhatsApp, Claude replies.",
       code: `launchctl bootstrap gui/$(id -u) \\
-  ~/Library/LaunchAgents/com.$(whoami).claude-bridge.plist
+  ~/Library/LaunchAgents/com.$(whoami).reverb.plist
 
 # You're done. Message from anywhere.`,
       lang: "bash",
@@ -486,7 +483,7 @@ function Comparison() {
                 <th className="text-left font-medium p-4">
                   <span className="inline-flex items-center gap-1.5">
                     <BrandLogo size={16} showWord={false} />
-                    claude-bridge
+                    reverb
                   </span>
                 </th>
                 <th className="text-left font-medium p-4 text-muted-foreground whitespace-nowrap">
@@ -546,8 +543,8 @@ function Cell({ value, strong = false }: { value: string; strong?: boolean }) {
 // ============================================================================
 
 function Install() {
-  const macOS = `git clone https://github.com/eusougustavocesar/claude-bridge.git
-cd claude-bridge
+  const macOS = `git clone https://github.com/eusougustavocesar/reverb.git
+cd reverb
 npm install && npm run build
 
 # 1. Scaffold LaunchAgent plist
@@ -558,17 +555,17 @@ npm run pair
 
 # 3. Start the daemon
 launchctl bootstrap gui/$(id -u) \\
-  ~/Library/LaunchAgents/com.$(whoami).claude-bridge.plist`;
+  ~/Library/LaunchAgents/com.$(whoami).reverb.plist`;
 
   const linux = `# systemd unit ships in v0.3 — for now, bare-metal:
-git clone https://github.com/eusougustavocesar/claude-bridge.git
-cd claude-bridge
+git clone https://github.com/eusougustavocesar/reverb.git
+cd reverb
 npm install && npm run build
 npm run pair          # scan QR, Ctrl+C when paired
-nohup npm run start > claude-bridge.log 2>&1 &`;
+nohup npm run start > reverb.log 2>&1 &`;
 
   const docker = `# Docker image is a v0.3 roadmap item. Follow:
-# https://github.com/eusougustavocesar/claude-bridge/issues
+# https://github.com/eusougustavocesar/reverb/issues
 #
 # Meanwhile: bare-metal install on any Node-capable host
 # works the same way as Linux.`;

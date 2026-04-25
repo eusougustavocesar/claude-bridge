@@ -86,10 +86,10 @@ export default function PairPage() {
               , then restart.
             </p>
             <pre className="bg-muted text-xs font-mono p-3 rounded-md overflow-x-auto whitespace-pre">
-{`launchctl bootout gui/$(id -u)/com.$(whoami).claude-bridge
+{`launchctl bootout gui/$(id -u)/com.$(whoami).reverb
 rm -rf auth_info
 launchctl bootstrap gui/$(id -u) \\
-  ~/Library/LaunchAgents/com.$(whoami).claude-bridge.plist`}
+  ~/Library/LaunchAgents/com.$(whoami).reverb.plist`}
             </pre>
           </CardContent>
         </Card>

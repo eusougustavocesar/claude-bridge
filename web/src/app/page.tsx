@@ -18,7 +18,7 @@ export default function Dashboard() {
   const [stopping, setStopping] = useState(false);
 
   async function handleStop() {
-    if (!confirm("Stop the claude-bridge daemon?")) return;
+    if (!confirm("Stop the reverb daemon?")) return;
     setStopping(true);
     try {
       await api.stop();
@@ -34,7 +34,7 @@ export default function Dashboard() {
       <Page>
         <PageHeader
           title="Dashboard"
-          description="Status and controls for the claude-bridge daemon."
+          description="Status and controls for the reverb daemon."
         />
         <EmptyState
           title="Daemon unreachable"
@@ -42,7 +42,7 @@ export default function Dashboard() {
           icon={<span className="text-xl">⚠</span>}
           action={
             <code className="px-3 py-1.5 rounded-md bg-muted font-mono text-xs">
-              launchctl kickstart -k gui/$(id -u)/com.$(whoami).claude-bridge
+              launchctl kickstart -k gui/$(id -u)/com.$(whoami).reverb
             </code>
           }
         />
@@ -54,7 +54,7 @@ export default function Dashboard() {
     <Page>
       <PageHeader
         title="Dashboard"
-        description="Status and controls for the claude-bridge daemon."
+        description="Status and controls for the reverb daemon."
         actions={
           <>
             {status?.hasQr ? (

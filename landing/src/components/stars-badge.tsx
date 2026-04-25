@@ -6,10 +6,10 @@
 export function StarsBadge() {
   return (
     <a
-      href="https://github.com/eusougustavocesar/claude-bridge"
+      href="https://github.com/eusougustavocesar/reverb"
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="Star claude-bridge on GitHub"
+      aria-label="Star reverb on GitHub"
       className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-border bg-background/70 hover:bg-background text-xs font-medium transition-colors"
     >
       <svg
@@ -24,7 +24,7 @@ export function StarsBadge() {
       <span>Star on GitHub</span>
       <span className="h-4 w-px bg-border mx-0.5" aria-hidden />
       <img
-        src="https://img.shields.io/github/stars/eusougustavocesar/claude-bridge?style=flat&label=&color=transparent&labelColor=transparent"
+        src="https://img.shields.io/github/stars/eusougustavocesar/reverb?style=flat&label=&color=transparent&labelColor=transparent"
         alt="star count"
         className="h-3.5"
       />

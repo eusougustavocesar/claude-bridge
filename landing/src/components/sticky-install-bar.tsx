@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { CopyButton } from "./copy-button";
 
 const INSTALL_CMD =
-  "git clone https://github.com/eusougustavocesar/claude-bridge.git";
+  "git clone https://github.com/eusougustavocesar/reverb.git";
 
 /**
  * Slim install bar that slides in from the bottom after the user scrolls

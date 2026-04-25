@@ -10,7 +10,7 @@ export function AnnouncementBar() {
           aria-hidden
         />
         <span className="text-muted-foreground">
-          claude-bridge{" "}
+          reverb{" "}
           <span
             className="font-mono font-medium"
             style={{ color: "var(--brand)" }}
@@ -20,7 +20,7 @@ export function AnnouncementBar() {
           just shipped —
         </span>
         <Link
-          href="https://github.com/eusougustavocesar/claude-bridge/releases/tag/v0.1.0"
+          href="https://github.com/eusougustavocesar/reverb/releases/tag/v0.1.0"
           target="_blank"
           rel="noopener noreferrer"
           className="font-medium hover:opacity-80 transition-opacity inline-flex items-center gap-1"

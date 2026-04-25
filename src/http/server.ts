@@ -294,7 +294,7 @@ export function createHttpServer(opts: HttpServerOptions) {
     app.get("/", (c) =>
       c.json({
         message:
-          "claude-bridge HTTP API is running. UI not built — run `npm --workspace web run build` to enable the admin UI.",
+          "reverb HTTP API is running. UI not built — run `npm --workspace web run build` to enable the admin UI.",
         endpoints: [
           "/api/healthz",
           "/api/status",

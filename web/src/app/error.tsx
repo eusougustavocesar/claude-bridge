@@ -14,7 +14,7 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     // eslint-disable-next-line no-console
-    console.error("[claude-bridge] unhandled:", error);
+    console.error("[reverb] unhandled:", error);
   }, [error]);
 
   return (

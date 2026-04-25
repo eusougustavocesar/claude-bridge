@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# claude-bridge installer (macOS).
+# reverb installer (macOS).
 # Generates a LaunchAgent plist from the template and registers it.
 #
 # Usage: bash scripts/install.sh
@@ -12,10 +12,10 @@ LAUNCH_AGENTS_DIR="$HOME/Library/LaunchAgents"
 
 USER_NAME="$(whoami)"
 NODE_BIN="$(which node || echo /usr/local/bin/node)"
-PLIST_NAME="com.$USER_NAME.claude-bridge.plist"
+PLIST_NAME="com.$USER_NAME.reverb.plist"
 PLIST_TARGET="$LAUNCH_AGENTS_DIR/$PLIST_NAME"
 
-echo "==> claude-bridge installer"
+echo "==> reverb installer"
 echo "    REPO_DIR : $REPO_DIR"
 echo "    NODE_BIN : $NODE_BIN"
 echo "    USER     : $USER_NAME"
@@ -61,5 +61,5 @@ echo "  4. Start the LaunchAgent daemon:"
 echo "       launchctl bootstrap gui/\$(id -u) $PLIST_TARGET"
 echo
 echo "  5. Verify:"
-echo "       launchctl list | grep claude-bridge"
-echo "       tail -f /tmp/claude-bridge.log"
+echo "       launchctl list | grep reverb"
+echo "       tail -f /tmp/reverb.log"

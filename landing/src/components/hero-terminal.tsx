@@ -29,7 +29,7 @@ export function HeroTerminal() {
         {/* Typing indicator — shows after prompt */}
         <div className={cn(styles.line, styles.typing)}>
           <span className="text-muted-foreground text-xs">
-            claude-bridge{" "}
+            reverb{" "}
             <span className={styles.dots}>
               <span>·</span>
               <span>·</span>
