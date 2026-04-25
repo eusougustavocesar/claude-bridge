@@ -104,9 +104,9 @@ function Hero() {
             <Image
               src="/demo.gif"
               alt="Sending a prompt from WhatsApp, Claude replies — Mac is asleep the whole time."
-              width={300}
-              height={354}
-              className="rounded-xl"
+              width={480}
+              height={566}
+              className="rounded-xl w-full max-w-md"
               unoptimized
               priority
             />
