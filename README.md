@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="brand/logo-lockup.png" alt="claude-bridge" width="400"/>
+  <img src="brand/logo-lockup.svg" alt="reverb" width="200"/>
 </p>
 
 <p align="center">
-  <b>Persistent Claude Code across messaging channels.</b><br>
-  Your Mac stays closed. Claude keeps working.
+  <b>Connect your AI CLI to any messaging channel.</b><br>
+  Your Mac stays closed. Your AI keeps working.
 </p>
 
 <p align="center">
@@ -21,7 +21,7 @@
 
 ---
 
-`claude-bridge` is a lightweight daemon that connects Claude Code to messaging channels (WhatsApp today, Telegram/Signal/Discord soon) with **real persistence** — it keeps running in the background, survives reboots, reconnects on network drops, and spawns `claude --print` on demand. You use your own Claude Code subscription. No API tokens. No Docker. No cloud.
+`reverb` is a lightweight daemon that connects your AI CLI (Claude Code, Gemini CLI, or any AI assistant) to messaging channels (WhatsApp today, Telegram/Signal/Discord soon) with **real persistence** — it keeps running in the background, survives reboots, reconnects on network drops, and spawns `claude --print` on demand. You use your own Claude Code subscription. No API tokens. No Docker. No cloud.
 
 Send yourself a WhatsApp message from the bus. Claude replies. Your Mac was asleep the whole time.
 
@@ -33,7 +33,7 @@ Everyone building "Claude via WhatsApp" hits the same wall: **persistence**.
 - **Docker-based alternatives** do persist — at the cost of a 2–4 GB Linux VM running 24/7 on your Mac. Overkill.
 - **Twilio / WhatsApp Business API solutions** require paid APIs and a business account.
 
-`claude-bridge` runs as a native **LaunchAgent** (macOS) / **systemd unit** (Linux, coming). ~50 MB of RAM. Auto-restarts on crash. Auto-reconnects on WhatsApp drops. Auto-starts on boot. Uses your existing Claude Code subscription via `claude --print`.
+`reverb` runs as a native **LaunchAgent** (macOS) / **systemd unit** (Linux, coming). ~50 MB of RAM. Auto-restarts on crash. Auto-reconnects on WhatsApp drops. Auto-starts on boot. Uses your existing Claude Code subscription via `claude --print`.
 
 ## Features
 
@@ -58,8 +58,8 @@ Everyone building "Claude via WhatsApp" hits the same wall: **persistence**.
 ### Install
 
 ```bash
-git clone https://github.com/eusougustavocesar/claude-bridge.git
-cd claude-bridge
+git clone https://github.com/eusougustavocesar/reverb.git
+cd reverb
 
 # Install deps and build
 npm install && npm run build
@@ -87,7 +87,7 @@ Once you see `Connected to WhatsApp` in the terminal, send yourself a test messa
 ### Start the daemon
 
 ```bash
-launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.$(whoami).claude-bridge.plist
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.$(whoami).reverb.plist
 ```
 
 That's it. The daemon now runs continuously, survives reboots, and Claude Code is a WhatsApp message away.
@@ -95,8 +95,8 @@ That's it. The daemon now runs continuously, survives reboots, and Claude Code i
 ### Verify it's alive
 
 ```bash
-launchctl list | grep claude-bridge
-tail -f /tmp/claude-bridge.log
+launchctl list | grep reverb
+tail -f /tmp/reverb.log
 ```
 
 ## How it works
@@ -109,7 +109,7 @@ tail -f /tmp/claude-bridge.log
                   ▼
         ┌────────────────────┐
         │    Baileys (Node)  │◄── runs as LaunchAgent, never sleeps
-        │    claude-bridge   │
+        │       reverb       │
         └─────────┬──────────┘
                   │  spawn subprocess on each message
                   ▼
@@ -161,7 +161,7 @@ See [`docs/configuration.md`](docs/configuration.md) for details and [`docs/trou
 
 ## Comparison
 
-| | claude-bridge | [Rich627/whatsapp-claude-plugin][rich627] | [osisdie/claude-code-channels][osisdie] | Twilio + API |
+| | reverb | [Rich627/whatsapp-claude-plugin][rich627] | [osisdie/claude-code-channels][osisdie] | Twilio + API |
 |---|:---:|:---:|:---:|:---:|
 | Persistence (Mac can be closed) | ✅ | ❌ | ✅ | ✅ |
 | Uses your Claude Code subscription (no API cost) | ✅ | ✅ | ✅ | ❌ |
@@ -176,7 +176,7 @@ See [`docs/configuration.md`](docs/configuration.md) for details and [`docs/trou
 
 ## Security
 
-`claude-bridge` gives a WhatsApp message access to Claude Code running on your machine. That's powerful — and risky — so the defaults are conservative:
+`reverb` gives a WhatsApp message access to Claude Code running on your machine. That's powerful — and risky — so the defaults are conservative:
 
 - **Sandboxed `CLAUDE_CWD`** — defaults to `./workspace` inside the repo. Claude can only read/write inside it. Do NOT set it to `$HOME`.
 - **Rate limiting** per chat (10 msgs / 60s).
@@ -186,7 +186,7 @@ See [`docs/configuration.md`](docs/configuration.md) for details and [`docs/trou
 
 See [`docs/security.md`](docs/security.md) for threat model and hardening tips.
 
-> ⚠️ `claude-bridge` uses WhatsApp's multidevice (linked device) protocol via [Baileys](https://github.com/WhiskeySockets/Baileys). This is the same mechanism WhatsApp Web uses, but using it programmatically **may violate WhatsApp's Terms of Service**. Historical ban rate on low-volume personal use is very low, but non-zero. Use a dedicated number for heavy automation.
+> ⚠️ `reverb` uses WhatsApp's multidevice (linked device) protocol via [Baileys](https://github.com/WhiskeySockets/Baileys). This is the same mechanism WhatsApp Web uses, but using it programmatically **may violate WhatsApp's Terms of Service**. Historical ban rate on low-volume personal use is very low, but non-zero. Use a dedicated number for heavy automation.
 
 ## Roadmap
 

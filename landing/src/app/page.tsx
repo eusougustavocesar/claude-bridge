@@ -685,7 +685,7 @@ function Footer() {
     <footer className="py-12">
       <div className="mx-auto max-w-5xl px-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex flex-col gap-2">
-          <BrandLogo />
+          <BrandLogo size={28} />
           <p className="text-xs text-muted-foreground max-w-md">
             MIT licensed · Built by{" "}
             <a
