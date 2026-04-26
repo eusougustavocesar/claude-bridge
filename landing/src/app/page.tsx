@@ -72,14 +72,7 @@ function Hero() {
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
-              <a
-                href={GH}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={buttonVariants({ size: "lg" })}
-              >
-                ⭐ Star on GitHub
-              </a>
+              <StarsBadge />
               <Link
                 href="#install"
                 className={buttonVariants({ variant: "outline", size: "lg" })}
