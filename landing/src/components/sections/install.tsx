@@ -5,54 +5,37 @@ import { LinkCard } from "@/components/link-card";
 import { GH_DOCS, GH_WHY, GH_RELEASE } from "@/lib/links";
 
 const macOS = `git clone https://github.com/eusougustavocesar/reverb.git
-cd reverb
-npm install && npm run build
+cd reverb && npm install && npm run setup
 
-# 1. Scaffold LaunchAgent plist
-bash scripts/install.sh
-
-# 2. Pair your phone (scan QR)
+# Then pair your phone (interactive QR scan)
 npm run pair
-
-# 3. Start the daemon
-launchctl bootstrap gui/$(id -u) \\
-  ~/Library/LaunchAgents/com.$(whoami).reverb.plist`;
+# iOS:     WhatsApp › Settings › Linked Devices › Link a Device
+# Android: WhatsApp › ⋮ Menu  › Linked Devices › Link a Device`;
 
 const linux = `git clone https://github.com/eusougustavocesar/reverb.git
-cd reverb
-npm install && npm run build
+cd reverb && npm install && npm run setup
 
-# 1. Scaffold systemd user service
-bash scripts/install.sh
-
-# 2. Pair your phone (scan QR)
+# Then pair your phone (interactive QR scan)
 npm run pair
+# iOS:     WhatsApp › Settings › Linked Devices › Link a Device
+# Android: WhatsApp › ⋮ Menu  › Linked Devices › Link a Device
 
-# 3. Start the daemon
-systemctl --user start reverb
-
-# 4. Persist across reboots (optional)
+# Optional: persist across reboots without re-login
 sudo loginctl enable-linger $USER`;
 
 const windows = `git clone https://github.com/eusougustavocesar/reverb.git
-cd reverb
-npm install && npm run build
+cd reverb; npm install; npm run setup
 
-# 1. Scaffold Task Scheduler job (no admin required)
-Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
-.\\scripts\\install.ps1
-
-# 2. Pair your phone (scan QR)
+# Then pair your phone (interactive QR scan)
 npm run pair
-
-# 3. Start the daemon
-Start-ScheduledTask -TaskName "Reverb"`;
+# iOS:     WhatsApp › Settings › Linked Devices › Link a Device
+# Android: WhatsApp › ⋮ Menu  › Linked Devices › Link a Device`;
 
 export function Install() {
   return (
     <section id="install">
       <div className="mx-auto max-w-5xl px-6 py-16 md:py-24">
-        <SectionHeader label="Install" title="Clone to daemon in 5 minutes." />
+        <SectionHeader label="Install" title="Up and running in minutes." />
 
         <Tabs defaultValue="macos" className="gap-4">
           <TabsList>
