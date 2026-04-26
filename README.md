@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/demo.gif" alt="Demo — sending a prompt from WhatsApp, Claude replies. Mac is asleep the whole time." width="320"/>
+  <img src="assets/demo.gif" alt="Demo — sending a prompt from WhatsApp, Claude replies. The host machine is asleep the whole time." width="320"/>
 </p>
 
 <p align="center">
@@ -57,36 +57,18 @@ Everyone building "Claude via WhatsApp" hits the same wall: **persistence**.
 ### Install
 
 **macOS / Linux**
-
 ```bash
 git clone https://github.com/eusougustavocesar/reverb.git
-cd reverb
-
-# Install deps and build
-npm install && npm run build
-
-# Register the daemon (LaunchAgent on macOS, systemd on Linux)
-bash scripts/install.sh
-
-# Edit config before first pairing
-cp .env.example .env
-# Verify CLAUDE_BIN — run `which claude` to get the path
+cd reverb && npm install && npm run setup
 ```
 
 **Windows**
-
 ```powershell
 git clone https://github.com/eusougustavocesar/reverb.git
-cd reverb
-
-npm install && npm run build
-
-# Register as a Task Scheduler task (run as Administrator)
-powershell -ExecutionPolicy Bypass -File scripts\install.ps1
-
-# Edit config before first pairing
-copy .env.example .env
+cd reverb; npm install; npm run setup
 ```
+
+`npm run setup` builds the project, registers the background service for your OS (LaunchAgent / systemd / Task Scheduler), and starts it.
 
 ### Pair your phone
 
@@ -96,30 +78,12 @@ npm run pair
 
 A QR code renders in your terminal. On your phone:
 
-> **WhatsApp → Settings → Linked Devices → Link a Device → scan**
+> **iOS:** WhatsApp › Settings › Linked Devices › Link a Device  
+> **Android:** WhatsApp › ⋮ Menu › Linked Devices › Link a Device
 
-Once you see `Connected to WhatsApp` in the terminal, send yourself a test message. When Claude replies, hit `Ctrl+C` to stop the pairing session.
+Once you see `Connected to WhatsApp`, send yourself a test message. When Claude replies, hit `Ctrl+C` — the background service takes it from here.
 
-### Start the daemon
-
-**macOS**
-```bash
-launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.$(whoami).reverb.plist
-```
-
-**Linux**
-```bash
-systemctl --user enable --now reverb
-```
-
-**Windows**
-
-The Task Scheduler task starts automatically. To trigger it immediately:
-```powershell
-Start-ScheduledTask -TaskName "reverb"
-```
-
-That's it. The daemon now runs continuously, survives reboots, and Claude Code is a WhatsApp message away.
+That's it. The service now runs continuously, survives reboots, and your AI is a WhatsApp message away.
 
 ### Verify it's alive
 
@@ -199,7 +163,7 @@ See [`docs/configuration.md`](docs/configuration.md) for details and [`docs/trou
 ## In-chat commands
 
 - `/help` — list commands
-- `/stop` — shut down the bridge (daemon auto-restarts on macOS/Linux; disable the task/service to stop permanently)
+- `/stop` — shut down the bridge (the background service auto-restarts; disable the service/task to stop permanently)
 
 ## Comparison
 
