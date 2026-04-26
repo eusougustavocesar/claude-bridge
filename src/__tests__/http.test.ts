@@ -11,6 +11,7 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { createHttpServer } from "../http/server.js";
+import { state } from "../http/state.js";
 
 const PORT = 39991;
 const BASE = `http://127.0.0.1:${PORT}`;
@@ -208,6 +209,7 @@ describe("POST /api/notify", () => {
     mockSentMessages.length = 0;
     envStore.NOTIFY_JID = "5500000000000@s.whatsapp.net";
     delete envStore.NOTIFY_TOKEN;
+    state.connection = "connected";
   });
 
   // ── happy path ──────────────────────────────────────────────────────────────
@@ -403,6 +405,17 @@ describe("POST /api/notify", () => {
   });
 
   // ── not connected ───────────────────────────────────────────────────────────
+
+  it("returns 503 when socket exists but WhatsApp is not connected", async () => {
+    state.connection = "disconnected";
+    const res = await fetch(`${BASE}/api/notify`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "test" }),
+    });
+    expect(res.status).toBe(503);
+    expect(mockSentMessages).toHaveLength(0);
+  });
 
   it("returns 503 when getSock returns null", async () => {
     const { createHttpServer: createServer } = await import("../http/server.js");

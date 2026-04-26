@@ -293,7 +293,7 @@ export function createHttpServer(opts: HttpServerOptions) {
     }
 
     const sock = opts.getSock?.() ?? null;
-    if (!sock) {
+    if (!sock || state.connection !== "connected") {
       return c.json({ error: "not connected to WhatsApp" }, 503);
     }
 
