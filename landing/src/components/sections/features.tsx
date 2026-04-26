@@ -18,17 +18,6 @@ export function Features() {
             }}
           >
             <CardContent className="flex flex-col p-6 h-full gap-4">
-              <div className="flex flex-wrap gap-1.5">
-                {["WhatsApp", "Telegram", "HTTP"].map((ch) => (
-                  <span
-                    key={ch}
-                    className="text-[11px] font-mono px-2 py-0.5 rounded-full border border-border bg-muted/60 text-muted-foreground"
-                  >
-                    {ch}
-                  </span>
-                ))}
-              </div>
-
               <div>
                 <h3 className="font-semibold text-base mb-1.5">Omnichannel</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
