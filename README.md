@@ -4,7 +4,7 @@
 
 <p align="center">
   <b>Connect your AI CLI to any messaging channel.</b><br>
-  Your Mac stays closed. Your AI keeps working.
+  Your device stays closed. Your AI keeps working.
 </p>
 
 <p align="center">
@@ -23,22 +23,22 @@
 
 `reverb` is a lightweight daemon that connects your AI CLI (Claude Code, Gemini CLI, or any AI assistant) to messaging channels (WhatsApp today, Telegram/Signal/Discord soon) with **real persistence** — it keeps running in the background, survives reboots, reconnects on network drops, and spawns `claude --print` on demand. You use your own Claude Code subscription. No API tokens. No Docker. No cloud.
 
-Send yourself a WhatsApp message from the bus. Claude replies. Your Mac was asleep the whole time.
+Send yourself a WhatsApp message from the bus. Claude replies. Your machine was asleep the whole time.
 
 ## Why
 
 Everyone building "Claude via WhatsApp" hits the same wall: **persistence**.
 
 - **Official Claude Code channel plugins** (like the WhatsApp plugin approved in the Anthropic marketplace) load inside your Claude Code session. The moment you close Claude Code, the bridge dies. Useless when you're away from your desk.
-- **Docker-based alternatives** do persist — at the cost of a 2–4 GB Linux VM running 24/7 on your Mac. Overkill.
+- **Docker-based alternatives** do persist — at the cost of a 2–4 GB Linux VM running 24/7. Overkill.
 - **Twilio / WhatsApp Business API solutions** require paid APIs and a business account.
 
-`reverb` runs as a native **LaunchAgent** (macOS) / **systemd unit** (Linux, coming). ~50 MB of RAM. Auto-restarts on crash. Auto-reconnects on WhatsApp drops. Auto-starts on boot. Uses your existing Claude Code subscription via `claude --print`.
+`reverb` runs as a native daemon (~50 MB RAM). Auto-restarts on crash. Auto-reconnects on WhatsApp drops. Auto-starts on boot. Uses your existing Claude Code subscription via `claude --print`.
 
 ## Features
 
 - 🔗 **WhatsApp** channel via multidevice linked-device protocol (no Business API, no phone number hosting)
-- 🧱 **Native persistence** — LaunchAgent on macOS; systemd unit planned for Linux
+- 🧱 **Native persistence** — LaunchAgent on macOS · systemd user service on Linux · Task Scheduler on Windows
 - 🛡️ **Sandboxed execution** — Claude Code runs with a scoped working directory, not your entire `$HOME`
 - 🚦 **Rate limiting** per chat (configurable; default 10 msgs / 60s)
 - 📜 **Audit log** with hashed JIDs — every processed message recorded in `logs/audit.jsonl`
@@ -50,12 +50,13 @@ Everyone building "Claude via WhatsApp" hits the same wall: **persistence**.
 
 ### Prerequisites
 
-- **macOS** (Linux/systemd support is on the roadmap)
-- **Node.js 18+**
+- **macOS, Linux, or Windows** — Node.js 18+
 - **Claude Code CLI** installed and authenticated (`claude login`)
 - An active WhatsApp account on your phone with a free Linked Device slot (max 4)
 
 ### Install
+
+**macOS / Linux**
 
 ```bash
 git clone https://github.com/eusougustavocesar/reverb.git
@@ -64,12 +65,27 @@ cd reverb
 # Install deps and build
 npm install && npm run build
 
-# Generate LaunchAgent plist
+# Register the daemon (LaunchAgent on macOS, systemd on Linux)
 bash scripts/install.sh
 
-# Edit sandbox/config before first pairing
+# Edit config before first pairing
 cp .env.example .env
-# Open .env — the defaults are safe, but verify CLAUDE_BIN points to your `claude` binary
+# Verify CLAUDE_BIN — run `which claude` to get the path
+```
+
+**Windows**
+
+```powershell
+git clone https://github.com/eusougustavocesar/reverb.git
+cd reverb
+
+npm install && npm run build
+
+# Register as a Task Scheduler task (run as Administrator)
+powershell -ExecutionPolicy Bypass -File scripts\install.ps1
+
+# Edit config before first pairing
+copy .env.example .env
 ```
 
 ### Pair your phone
@@ -86,17 +102,43 @@ Once you see `Connected to WhatsApp` in the terminal, send yourself a test messa
 
 ### Start the daemon
 
+**macOS**
 ```bash
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.$(whoami).reverb.plist
+```
+
+**Linux**
+```bash
+systemctl --user enable --now reverb
+```
+
+**Windows**
+
+The Task Scheduler task starts automatically. To trigger it immediately:
+```powershell
+Start-ScheduledTask -TaskName "reverb"
 ```
 
 That's it. The daemon now runs continuously, survives reboots, and Claude Code is a WhatsApp message away.
 
 ### Verify it's alive
 
+**macOS**
 ```bash
 launchctl list | grep reverb
 tail -f /tmp/reverb.log
+```
+
+**Linux**
+```bash
+systemctl --user status reverb
+journalctl --user -u reverb -f
+```
+
+**Windows**
+```powershell
+Get-ScheduledTask -TaskName "reverb" | Get-ScheduledTaskInfo
+Get-Content "$env:APPDATA\reverb\reverb.log" -Tail 50
 ```
 
 ## How it works
@@ -108,7 +150,7 @@ tail -f /tmp/reverb.log
                   │  multidevice linked device (WebSocket)
                   ▼
         ┌────────────────────┐
-        │    Baileys (Node)  │◄── runs as LaunchAgent, never sleeps
+        │    Baileys (Node)  │◄── runs as daemon, never sleeps
         │       reverb       │
         └─────────┬──────────┘
                   │  spawn subprocess on each message
@@ -131,8 +173,8 @@ tail -f /tmp/reverb.log
 Everything lives in `.env`:
 
 ```env
-# Path to Claude binary
-CLAUDE_BIN=/Users/YOU/.local/bin/claude
+# Path to Claude binary (run `which claude` to find yours)
+CLAUDE_BIN=claude
 
 # Sandboxed working directory (Claude can only read/write inside this)
 CLAUDE_CWD=./workspace
@@ -157,16 +199,19 @@ See [`docs/configuration.md`](docs/configuration.md) for details and [`docs/trou
 ## In-chat commands
 
 - `/help` — list commands
-- `/stop` — shut down the bridge (daemon auto-restarts via LaunchAgent; use `launchctl bootout` to stop permanently)
+- `/stop` — shut down the bridge (daemon auto-restarts on macOS/Linux; disable the task/service to stop permanently)
 
 ## Comparison
 
 | | reverb | [Rich627/whatsapp-claude-plugin][rich627] | [osisdie/claude-code-channels][osisdie] | Twilio + API |
 |---|:---:|:---:|:---:|:---:|
-| Persistence (Mac can be closed) | ✅ | ❌ | ✅ | ✅ |
+| Persistence (device can be closed) | ✅ | ❌ | ✅ | ✅ |
 | Uses your Claude Code subscription (no API cost) | ✅ | ✅ | ✅ | ❌ |
 | Runtime footprint | ~50 MB | 0 (inside Claude Code) | 2–4 GB (Docker) | N/A (cloud) |
 | Installation | 1 script | `claude plugin install` | `docker compose up` | complex |
+| macOS | ✅ | ✅ | ✅ | ✅ |
+| Linux / VPS | ✅ | ❌ | ✅ | ✅ |
+| Windows | ✅ | ❌ | ❌ | ✅ |
 | Multi-channel | WA (+ Telegram/Signal planned) | WA only | WA + Telegram + Discord + Slack + LINE | any |
 | Official Anthropic marketplace | not yet | ✅ | ❌ | ❌ |
 | Open source | ✅ MIT | ✅ | ✅ | varies |
@@ -190,12 +235,12 @@ See [`docs/security.md`](docs/security.md) for threat model and hardening tips.
 
 ## Roadmap
 
-- [x] v0.1 — WhatsApp channel, LaunchAgent, sandboxing, rate limiting
+- [x] v0.1 — WhatsApp channel, LaunchAgent (macOS), sandboxing, rate limiting
+- [x] v0.1 — systemd user service (Linux/VPS), Task Scheduler (Windows)
 - [ ] v0.2 — Telegram channel (plug-in adapter)
-- [ ] v0.3 — systemd unit + Linux quickstart
-- [ ] v0.4 — Session per chat (multi-conversation context isolation)
-- [ ] v0.5 — Media: audio (whisper transcription), images (vision)
-- [ ] v0.6 — Slash commands framework (`/reset`, `/session new`, `/status`)
+- [ ] v0.3 — Session per chat (multi-conversation context isolation)
+- [ ] v0.4 — Media: audio (whisper transcription), images (vision)
+- [ ] v0.5 — Slash commands framework (`/reset`, `/session new`, `/status`)
 - [ ] v1.0 — Homebrew formula, signed release binaries
 
 ## Contributing
