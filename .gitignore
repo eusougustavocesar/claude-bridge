@@ -9,3 +9,4 @@ workspace/*
 !workspace/CLAUDE.md
 .DS_Store
 *.tsbuildinfo
+reverb-start.cmd

@@ -1,0 +1,17 @@
+[Unit]
+Description=Reverb — WhatsApp ↔ Claude bridge
+Documentation=https://github.com/eusougustavocesar/reverb
+
+[Service]
+Type=simple
+ExecStart={{NODE_BIN}} {{REPO_DIR}}/dist/bot.js
+WorkingDirectory={{REPO_DIR}}
+Restart=always
+RestartSec=10
+Environment="HOME={{HOME}}"
+Environment="NODE_ENV=production"
+StandardOutput=append:/tmp/reverb.log
+StandardError=append:/tmp/reverb.err
+
+[Install]
+WantedBy=default.target
