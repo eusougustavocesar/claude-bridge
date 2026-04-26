@@ -12,6 +12,7 @@ import { CreatorQuote } from "@/components/creator-quote";
 import { FAQ } from "@/components/faq";
 import { SetupTimeChart } from "@/components/setup-time-chart";
 import { HeroTerminal } from "@/components/hero-terminal";
+import { StarsBadge } from "@/components/stars-badge";
 import { StickyInstallBar } from "@/components/sticky-install-bar";
 
 const GH = "https://github.com/eusougustavocesar/reverb";
