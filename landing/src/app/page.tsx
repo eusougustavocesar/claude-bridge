@@ -73,7 +73,7 @@ function Hero() {
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
-              <StarsBadge />
+              <StarsBadge size="lg" />
               <Link
                 href="#install"
                 className={buttonVariants({ variant: "outline", size: "lg" })}
