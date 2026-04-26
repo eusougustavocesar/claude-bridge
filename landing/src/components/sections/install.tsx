@@ -34,7 +34,7 @@ const docker = `# Docker image is a v0.3 roadmap item. Follow:
 export function Install() {
   return (
     <section id="install">
-      <div className="mx-auto max-w-5xl px-6 py-32">
+      <div className="mx-auto max-w-5xl px-6 py-24">
         <SectionHeader label="Install" title="Clone to daemon in 5 minutes." />
 
         <Tabs defaultValue="macos" className="gap-4">

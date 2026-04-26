@@ -7,7 +7,7 @@ import Link from "next/link";
 export function CreatorQuote() {
   return (
     <section>
-      <div className="mx-auto max-w-3xl px-6 py-32">
+      <div className="mx-auto max-w-3xl px-6 py-24">
         <figure className="flex flex-col gap-8">
           <span
             aria-hidden

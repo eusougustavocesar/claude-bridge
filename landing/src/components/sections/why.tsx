@@ -20,7 +20,7 @@ const problems = [
 export function Why() {
   return (
     <section>
-      <div className="mx-auto max-w-5xl px-6 py-32">
+      <div className="mx-auto max-w-5xl px-6 py-24">
         <SectionHeader label="The problem" title="Everything else had a catch." />
 
         <div className="grid md:grid-cols-3 gap-4">

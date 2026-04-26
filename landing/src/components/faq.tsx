@@ -47,7 +47,7 @@ const items = [
 export function FAQ() {
   return (
     <section id="faq">
-      <div className="mx-auto max-w-3xl px-6 py-32">
+      <div className="mx-auto max-w-3xl px-6 py-24">
         <div className="flex flex-col items-start gap-3 mb-10">
           <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
             FAQ

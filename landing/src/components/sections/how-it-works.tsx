@@ -36,7 +36,7 @@ bash scripts/install.sh`,
 export function HowItWorks() {
   return (
     <section id="how">
-      <div className="mx-auto max-w-5xl px-6 py-32">
+      <div className="mx-auto max-w-5xl px-6 py-24">
         <SectionHeader label="How it works" title="Clone. Pair. Done." />
 
         <ol className="flex flex-col gap-6">
