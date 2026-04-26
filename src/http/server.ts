@@ -1,15 +1,21 @@
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 import { spawn, type ChildProcess } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { readFile } from "node:fs/promises";
-import { join, resolve, extname } from "node:path";
+import { dirname, join, resolve, extname } from "node:path";
+import { fileURLToPath } from "node:url";
 import pino from "pino";
 import { state, claudeAuth } from "./state.js";
+import { readEnvFile, writeEnvFile } from "../lib/env.js";
 
 const logger = pino({ level: "info", name: "http" });
 
-const REPO_ROOT = resolve(import.meta.dirname ?? ".", "..", "..");
+const REPO_ROOT = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "..",
+  ".."
+);
 const WEB_DIST = join(REPO_ROOT, "web", "out");
 const ENV_PATH = join(REPO_ROOT, ".env");
 const AUDIT_PATH = join(REPO_ROOT, "logs", "audit.jsonl");
@@ -441,52 +447,4 @@ function resolveStaticFile(
   return null;
 }
 
-// ----- Minimal .env read/write helpers (shared with bot.ts) -----------
-
-export function readEnvFile(): Record<string, string> {
-  if (!existsSync(ENV_PATH)) return {};
-  const text = readFileSync(ENV_PATH, "utf8");
-  const result: Record<string, string> = {};
-  for (const raw of text.split(/\r?\n/)) {
-    const line = raw.trim();
-    if (!line || line.startsWith("#")) continue;
-    const eq = line.indexOf("=");
-    if (eq < 0) continue;
-    const key = line.slice(0, eq).trim();
-    let value = line.slice(eq + 1).trim();
-    if (
-      (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
-      value = value.slice(1, -1);
-    }
-    result[key] = value;
-  }
-  return result;
-}
-
-export function writeEnvFile(values: Record<string, string>): void {
-  // Preserve structure: read existing .env, replace known keys, keep comments
-  let text = existsSync(ENV_PATH) ? readFileSync(ENV_PATH, "utf8") : "";
-  const seen = new Set<string>();
-
-  const lines = text.split(/\r?\n/).map((raw) => {
-    const trimmed = raw.trim();
-    if (!trimmed || trimmed.startsWith("#")) return raw;
-    const eq = trimmed.indexOf("=");
-    if (eq < 0) return raw;
-    const key = trimmed.slice(0, eq).trim();
-    if (key in values) {
-      seen.add(key);
-      return `${key}=${values[key]}`;
-    }
-    return raw;
-  });
-
-  // Append any keys not seen in the original file
-  for (const [k, v] of Object.entries(values)) {
-    if (!seen.has(k)) lines.push(`${k}=${v}`);
-  }
-
-  writeFileSync(ENV_PATH, lines.join("\n"));
-}
+export { readEnvFile, writeEnvFile };

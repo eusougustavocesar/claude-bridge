@@ -1,7 +1,8 @@
 import { spawn } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync, appendFileSync, mkdirSync } from "node:fs";
-import { createHash } from "node:crypto";
 import { dirname, join, resolve } from "node:path";
+import { tmpdir } from "node:os";
+import { fileURLToPath } from "node:url";
 import qrcode from "qrcode-terminal";
 import qrPng from "qrcode";
 import pino from "pino";
@@ -16,19 +17,21 @@ import makeWASocket, {
 } from "@whiskeysockets/baileys";
 
 import { state as bridgeState } from "./http/state.js";
-import {
-  createHttpServer,
-  readEnvFile,
-  writeEnvFile,
-} from "./http/server.js";
+import { createHttpServer } from "./http/server.js";
+import { chunkText, hashJid } from "./lib/utils.js";
+import { readEnvFile, writeEnvFile } from "./lib/env.js";
 
 // ============================================================================
 // Config (env)
 // ============================================================================
 
-const envFromFile = loadEnvFile();
+const ENV_PATH = join(dirname(fileURLToPath(import.meta.url)), "..", ".env");
+const envFromFile = readEnvFile(ENV_PATH);
 
-const REPO_ROOT = resolve(import.meta.dirname ?? ".", "..");
+const REPO_ROOT = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  ".."
+);
 
 const CLAUDE_BIN =
   envFromFile.CLAUDE_BIN ?? process.env.CLAUDE_BIN ?? "claude";
@@ -102,10 +105,6 @@ function audit(event: Record<string, unknown>) {
   }
 }
 
-function hashJid(jid: string): string {
-  return createHash("sha256").update(jid).digest("hex").slice(0, 16);
-}
-
 // ============================================================================
 // WhatsApp connection
 // ============================================================================
@@ -132,7 +131,7 @@ async function main() {
     if (qr) {
       bridgeState.connection = "pairing";
       bridgeState.qr = qr;
-      const pngPath = "/tmp/reverb-qr.png";
+      const pngPath = join(tmpdir(), "reverb-qr.png");
       qrPng
         .toFile(pngPath, qr, { scale: 10, margin: 2 })
         .then(() =>
@@ -239,7 +238,7 @@ async function handleMessage(sock: WASocket, msg: WAMessage) {
   // Kill switch
   if (text.trim() === "/stop" && matchesSelf) {
     await sock.sendMessage(jid, {
-      text: "🛑 reverb stopping. Use `launchctl kickstart` (macOS) or `systemctl restart` (Linux) to bring it back.",
+      text: "🛑 reverb stopping. To restart: `launchctl kickstart` (macOS), `systemctl --user start reverb` (Linux), or `Start-ScheduledTask -TaskName Reverb` (Windows).",
     });
     logger.warn("Kill switch activated via /stop");
     process.exit(0);
@@ -297,22 +296,6 @@ async function handleMessage(sock: WASocket, msg: WAMessage) {
   bridgeState.processed += 1;
 }
 
-function chunkText(text: string, size: number): string[] {
-  if (text.length <= size) return [text];
-  const chunks: string[] = [];
-  let remaining = text;
-  while (remaining.length > size) {
-    // Try to split at paragraph / sentence boundary near `size`
-    let cut = remaining.lastIndexOf("\n\n", size);
-    if (cut < size * 0.5) cut = remaining.lastIndexOf("\n", size);
-    if (cut < size * 0.5) cut = remaining.lastIndexOf(". ", size);
-    if (cut < size * 0.5) cut = size;
-    chunks.push(remaining.slice(0, cut).trimEnd());
-    remaining = remaining.slice(cut).trimStart();
-  }
-  if (remaining) chunks.push(remaining);
-  return chunks;
-}
 
 // ============================================================================
 // Claude subprocess
@@ -393,40 +376,6 @@ function ensureSandbox() {
   }
 }
 
-// ============================================================================
-// Minimal .env loader (no dotenv dep)
-// ============================================================================
-
-function loadEnvFile(): Record<string, string> {
-  const path = join(import.meta.dirname ?? ".", "..", ".env");
-  if (!existsSync(path)) return {};
-  try {
-    const text = readFileSync(path, "utf8");
-    const result: Record<string, string> = {};
-    for (const raw of text.split(/\r?\n/)) {
-      const line = raw.trim();
-      if (!line || line.startsWith("#")) continue;
-      const eq = line.indexOf("=");
-      if (eq < 0) continue;
-      const key = line.slice(0, eq).trim();
-      let value = line.slice(eq + 1).trim();
-      if (
-        (value.startsWith('"') && value.endsWith('"')) ||
-        (value.startsWith("'") && value.endsWith("'"))
-      ) {
-        value = value.slice(1, -1);
-      }
-      result[key] = value;
-    }
-    return result;
-  } catch {
-    return {};
-  }
-}
-
-// ============================================================================
-// Entrypoint
-// ============================================================================
 
 // ============================================================================
 // Entrypoint
@@ -438,8 +387,8 @@ if (HTTP_ENABLED) {
   httpServerInstance = createHttpServer({
     host: HTTP_HOST,
     port: HTTP_PORT,
-    readEnv: readEnvFile,
-    writeEnv: writeEnvFile,
+    readEnv: () => readEnvFile(ENV_PATH),
+    writeEnv: (values) => writeEnvFile(ENV_PATH, values),
     onStop: () => logger.warn("stop requested via HTTP"),
     claudeBin: CLAUDE_BIN,
     claudeCwd: CLAUDE_CWD,
