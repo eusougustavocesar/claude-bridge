@@ -9,6 +9,8 @@ export function Features() {
         <SectionHeader label="Features" title="Built to run unattended." />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-auto sm:auto-rows-[220px]">
+
+          {/* Row 1 */}
           <BentoCard
             title="WhatsApp channel"
             body="Linked-device protocol via Baileys. No Business API, no phone number hosting, no cloud relay."
@@ -21,36 +23,19 @@ export function Features() {
           </BentoCard>
 
           <BentoCard
-            title="Persistent"
+            title="Always-on"
             body="Native system service on macOS, Linux, and Windows. Starts on boot, restarts on crash, reconnects on drops."
           />
 
           <BentoCard
-            title="Sandboxed"
-            body="Claude runs inside a scoped working directory. Your $HOME is off-limits."
+            title="Secure by default"
+            body="Claude is sandboxed to a scoped directory — $HOME is off-limits. Per-chat rate limiting. Every message audit-logged with hashed JIDs."
           />
 
-          <BentoCard
-            title="Rate-limited"
-            body="Per-chat token bucket. Runaway loops won't burn your subscription."
-          />
-
-          <BentoCard
-            title="Admin UI"
-            body="Local dashboard at 127.0.0.1:3737. Pair your phone, edit config, read logs, kill the daemon."
-            colSpan={2}
-          >
-            <MiniCode lang="url" code="http://127.0.0.1:3737/" />
-          </BentoCard>
-
-          <BentoCard
-            title="Audit log"
-            body="Every message logged. JIDs stored as SHA-256 hashes, not phone numbers."
-          />
-
+          {/* Row 2 */}
           <BentoCard
             title="Webhook notifications"
-            body="Any process on the same machine POSTs to /api/notify and you get a WhatsApp message. Monitor your VPS, get deploy alerts, track errors — without exposing anything to the internet."
+            body="Any process on the same machine POSTs to /api/notify and you get a WhatsApp message. Deploy alerts, error tracking, cron results — local only, never exposed."
             colSpan={2}
           >
             <MiniCode
@@ -61,24 +46,28 @@ export function Features() {
 
           <BentoCard
             title="Monitors"
-            body="Active health checks and scheduled shell jobs — configured in a single JSON file. Alerts when a service goes down, recovers, or a cron script exits non-zero."
+            body="Active health checks and scheduled shell jobs via monitors.json. Alerts on down, recovery, or non-zero exit."
             colSpan={2}
           >
             <MiniCode
               lang="json"
-              code={`{ "name": "api", "type": "http",\n  "url": "http://localhost:3000/health",\n  "interval": "5m", "jid": "..." }`}
+              code={`{ "name": "api", "type": "http",\n  "url": "http://localhost:3000/health",\n  "interval": "5m" }`}
             />
           </BentoCard>
 
+          {/* Row 3 */}
           <BentoCard
             title="Voice messages"
             body="Send a voice message, get a text reply. Whisper transcribes locally — no API key, no cloud, no extra billing."
+            colSpan={2}
           />
 
           <BentoCard
             title="Images, PDFs & stickers"
-            body="Send any Claude-native file format — image, PDF, sticker — with or without a caption. Claude reads it from the sandbox. Vision, OCR, document parsing — just send it."
+            body="Send any Claude-native format with or without a caption. Claude reads it from the sandbox — vision, OCR, document parsing."
+            colSpan={2}
           />
+
         </div>
       </div>
     </section>
