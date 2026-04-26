@@ -14,6 +14,7 @@ import { readEnvFile, writeEnvFile } from "./lib/env.js";
 import { hashJid } from "./lib/utils.js";
 import { startWhatsApp } from "./channels/whatsapp/connect.js";
 import { routeMessage } from "./handlers/index.js";
+import { startMonitors } from "./monitors/index.js";
 
 // ============================================================================
 // Config (env)
@@ -55,6 +56,9 @@ const WHISPER_LANGUAGE = env.WHISPER_LANGUAGE ?? undefined;
 
 const IMAGE_ENABLED = (env.IMAGE_ENABLED ?? "false").toLowerCase() === "true";
 const MEDIA_TMP_TTL_SECONDS = Number(env.MEDIA_TMP_TTL_SECONDS) || 60;
+
+const MONITORS_ENABLED = (env.MONITORS_ENABLED ?? "false").toLowerCase() === "true";
+const MONITORS_CONFIG = resolve(REPO_ROOT, env.MONITORS_CONFIG ?? "./monitors.json");
 
 const AUDIT_LOG = join(REPO_ROOT, "logs", "audit.jsonl");
 const logger = pino({ level: "info" });
@@ -178,6 +182,7 @@ async function handleMessage(sock: WASocket, msg: WAMessage): Promise<void> {
 // ============================================================================
 
 let currentSock: WASocket | null = null;
+let stopMonitors: (() => void) | null = null;
 
 let httpServerInstance: { close: () => void } | null = null;
 if (HTTP_ENABLED) {
@@ -200,6 +205,7 @@ startWhatsApp({
   httpPort: HTTP_PORT,
   onSockReady: (sock) => {
     currentSock = sock;
+    if (MONITORS_ENABLED) stopMonitors = startMonitors(sock, MONITORS_CONFIG, logger);
   },
   onMessage: handleMessage,
   logger,
@@ -210,6 +216,7 @@ startWhatsApp({
 
 const gracefulShutdown = (signal: string) => {
   logger.info({ signal }, "signal received, shutting down");
+  stopMonitors?.();
   httpServerInstance?.close();
   process.exit(0);
 };

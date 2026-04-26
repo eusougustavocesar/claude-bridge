@@ -42,6 +42,18 @@ export interface HttpServerOptions {
   claudeMcpConfig: string;
 }
 
+export function parseNotifyRoutes(raw: string): Record<string, string> {
+  const routes: Record<string, string> = {};
+  for (const entry of raw.split(",")) {
+    const colon = entry.indexOf(":");
+    if (colon < 1) continue;
+    const service = entry.slice(0, colon).trim();
+    const jid = entry.slice(colon + 1).trim();
+    if (service && jid) routes[service] = jid;
+  }
+  return routes;
+}
+
 export function createHttpServer(opts: HttpServerOptions) {
   const host = opts.host ?? "127.0.0.1";
   const port = opts.port ?? 3737;
@@ -298,7 +310,9 @@ export function createHttpServer(opts: HttpServerOptions) {
     }
 
     const env = opts.readEnv();
-    const jid = body.to ?? env.NOTIFY_JID ?? state.me?.id ?? null;
+    const routes = parseNotifyRoutes(env.NOTIFY_ROUTES ?? "");
+    const routedJid = body.service ? routes[body.service] : undefined;
+    const jid = body.to ?? routedJid ?? env.NOTIFY_JID ?? state.me?.id ?? null;
     if (!jid) {
       return c.json(
         { error: "no target JID — set NOTIFY_JID in .env or pass `to` in body" },

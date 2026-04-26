@@ -1,0 +1,31 @@
+[
+  {
+    "name": "api-health",
+    "type": "http",
+    "url": "http://localhost:3000/health",
+    "interval": "5m",
+    "jid": "5548999999999@s.whatsapp.net",
+    "timeout": 5000
+  },
+  {
+    "name": "db-health",
+    "type": "http",
+    "url": "http://localhost:5432",
+    "interval": "10m",
+    "jid": "5548999999999@s.whatsapp.net"
+  },
+  {
+    "name": "daily-digest",
+    "type": "shell",
+    "cmd": "node scripts/digest.js",
+    "cron": "0 9 * * *",
+    "jid": "5548999999999@s.whatsapp.net"
+  },
+  {
+    "name": "error-check",
+    "type": "shell",
+    "cmd": "node scripts/check-errors.js",
+    "interval": "30m",
+    "jid": "5548999999999@s.whatsapp.net"
+  }
+]
