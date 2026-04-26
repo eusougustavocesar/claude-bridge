@@ -6,8 +6,8 @@ import { StarsBadge } from "@/components/stars-badge";
 
 export function Hero() {
   return (
-    <section className="border-b border-border">
-      <div className="mx-auto max-w-5xl px-6 pt-20 pb-20">
+    <section>
+      <div className="mx-auto max-w-5xl px-6 pt-28 pb-28">
         <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
 
           <div className="flex flex-col gap-7">

@@ -4,8 +4,8 @@ import { SectionHeader } from "@/components/section-header";
 
 export function Features() {
   return (
-    <section id="features" className="border-b border-border">
-      <div className="mx-auto max-w-5xl px-6 py-20">
+    <section id="features">
+      <div className="mx-auto max-w-5xl px-6 py-32">
         <SectionHeader label="Features" title="Built to run unattended." />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-[220px]">

@@ -19,8 +19,8 @@ const problems = [
 
 export function Why() {
   return (
-    <section className="border-b border-border">
-      <div className="mx-auto max-w-5xl px-6 py-20">
+    <section>
+      <div className="mx-auto max-w-5xl px-6 py-32">
         <SectionHeader label="The problem" title="Everything else had a catch." />
 
         <div className="grid md:grid-cols-3 gap-4">

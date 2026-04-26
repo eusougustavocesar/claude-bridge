@@ -6,8 +6,8 @@ import Link from "next/link";
  */
 export function CreatorQuote() {
   return (
-    <section className="border-b border-border">
-      <div className="mx-auto max-w-3xl px-6 py-20">
+    <section>
+      <div className="mx-auto max-w-3xl px-6 py-32">
         <figure className="flex flex-col gap-8">
           <span
             aria-hidden
