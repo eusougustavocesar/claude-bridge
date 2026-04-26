@@ -65,8 +65,8 @@ export function Features() {
           />
 
           <BentoCard
-            title="Images"
-            body="Send an image (with or without caption) and Claude reads it from the sandbox. Vision, OCR, document parsing — just send it."
+            title="Images, PDFs & stickers"
+            body="Send any Claude-native file format — image, PDF, sticker — with or without a caption. Claude reads it from the sandbox. Vision, OCR, document parsing — just send it."
           />
         </div>
       </div>
