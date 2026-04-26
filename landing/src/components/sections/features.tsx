@@ -12,13 +12,13 @@ export function Features() {
 
           {/* Row 1 */}
           <BentoCard
-            title="WhatsApp channel"
-            body="Linked-device protocol via Baileys. No Business API, no phone number hosting, no cloud relay."
+            title="Omnichannel"
+            body="WhatsApp via Baileys, Telegram via long-polling, or any external app via the HTTP /api/chat endpoint. One handler, any channel."
             colSpan={2}
           >
             <MiniCode
               lang="bash"
-              code={`$ npm run pair\n→ QR in terminal\n→ scan in WhatsApp`}
+              code={`TELEGRAM_ENABLED=true\nTELEGRAM_TOKEN=your-bot-token\n# or: POST /api/chat {"message":"hello"}`}
             />
           </BentoCard>
 
@@ -29,7 +29,7 @@ export function Features() {
 
           <BentoCard
             title="Secure by default"
-            body="Claude is sandboxed to a scoped directory — $HOME is off-limits. Per-chat rate limiting. Every message audit-logged with hashed JIDs."
+            body="Claude is sandboxed to a scoped directory — $HOME is off-limits. Per-chat rate limiting. Every message audit-logged with hashed IDs."
           />
 
           {/* Row 2 */}
