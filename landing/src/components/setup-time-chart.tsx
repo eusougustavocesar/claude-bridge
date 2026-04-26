@@ -47,12 +47,12 @@ export function SetupTimeChart() {
   return (
     <div
       ref={ref}
-      className="rounded-2xl border border-border bg-card/40 p-6 md:p-8"
+      className="rounded-2xl border border-border bg-card/40 p-4 sm:p-6 md:p-8"
     >
-      <div className="flex items-baseline justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 sm:gap-4 mb-6">
         <h3 className="text-sm font-medium">Setup time (minutes, lower is better)</h3>
-        <span className="text-xs font-mono text-muted-foreground">
-          measured on a fresh macOS
+        <span className="text-xs font-mono text-muted-foreground hidden sm:block">
+          measured on macOS · similar on Linux/Windows
         </span>
       </div>
 

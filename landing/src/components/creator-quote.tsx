@@ -7,7 +7,7 @@ import Link from "next/link";
 export function CreatorQuote() {
   return (
     <section>
-      <div className="mx-auto max-w-3xl px-6 py-24">
+      <div className="mx-auto max-w-3xl px-6 py-16 md:py-24">
         <figure className="flex flex-col gap-8">
           <span
             aria-hidden
@@ -17,7 +17,7 @@ export function CreatorQuote() {
             &ldquo;
           </span>
 
-          <blockquote className="text-xl md:text-2xl font-medium tracking-tight leading-snug text-foreground">
+          <blockquote className="text-lg md:text-xl lg:text-2xl font-medium tracking-tight leading-snug text-foreground">
             I wanted to use Claude Code from my phone. The official plugin died
             the moment I closed the CLI. Docker ate 4 GB of RAM for a chat
             bridge. Twilio wanted a business account.

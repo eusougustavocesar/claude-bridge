@@ -5,10 +5,10 @@ import { SectionHeader } from "@/components/section-header";
 export function Features() {
   return (
     <section id="features">
-      <div className="mx-auto max-w-5xl px-6 py-24">
+      <div className="mx-auto max-w-5xl px-6 py-16 md:py-24">
         <SectionHeader label="Features" title="Built to run unattended." />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-[220px]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-auto sm:auto-rows-[220px]">
           <BentoCard
             title="WhatsApp channel"
             body="Linked-device protocol via Baileys. No Business API, no phone number hosting, no cloud relay."
@@ -22,7 +22,7 @@ export function Features() {
 
           <BentoCard
             title="Persistent"
-            body="LaunchAgent on macOS. Starts on boot, restarts on crash, reconnects on network drops."
+            body="Native system service on macOS, Linux, and Windows. Starts on boot, restarts on crash, reconnects on drops."
           />
 
           <BentoCard

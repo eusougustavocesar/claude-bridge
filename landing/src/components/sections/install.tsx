@@ -18,30 +18,47 @@ npm run pair
 launchctl bootstrap gui/$(id -u) \\
   ~/Library/LaunchAgents/com.$(whoami).reverb.plist`;
 
-const linux = `# systemd unit ships in v0.3 — for now, bare-metal:
-git clone https://github.com/eusougustavocesar/reverb.git
+const linux = `git clone https://github.com/eusougustavocesar/reverb.git
 cd reverb
 npm install && npm run build
-npm run pair          # scan QR, Ctrl+C when paired
-nohup npm run start > reverb.log 2>&1 &`;
 
-const docker = `# Docker image is a v0.3 roadmap item. Follow:
-# https://github.com/eusougustavocesar/reverb/issues
-#
-# Meanwhile: bare-metal install on any Node-capable host
-# works the same way as Linux.`;
+# 1. Scaffold systemd user service
+bash scripts/install.sh
+
+# 2. Pair your phone (scan QR)
+npm run pair
+
+# 3. Start the daemon
+systemctl --user start reverb
+
+# 4. Persist across reboots (optional)
+sudo loginctl enable-linger $USER`;
+
+const windows = `git clone https://github.com/eusougustavocesar/reverb.git
+cd reverb
+npm install && npm run build
+
+# 1. Scaffold Task Scheduler job (no admin required)
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+.\\scripts\\install.ps1
+
+# 2. Pair your phone (scan QR)
+npm run pair
+
+# 3. Start the daemon
+Start-ScheduledTask -TaskName "Reverb"`;
 
 export function Install() {
   return (
     <section id="install">
-      <div className="mx-auto max-w-5xl px-6 py-24">
+      <div className="mx-auto max-w-5xl px-6 py-16 md:py-24">
         <SectionHeader label="Install" title="Clone to daemon in 5 minutes." />
 
         <Tabs defaultValue="macos" className="gap-4">
           <TabsList>
             <TabsTrigger value="macos">macOS</TabsTrigger>
             <TabsTrigger value="linux">Linux</TabsTrigger>
-            <TabsTrigger value="docker">Docker</TabsTrigger>
+            <TabsTrigger value="windows">Windows</TabsTrigger>
           </TabsList>
           <TabsContent value="macos">
             <TerminalBlock lang="macOS · bash" code={macOS} />
@@ -49,8 +66,8 @@ export function Install() {
           <TabsContent value="linux">
             <TerminalBlock lang="Linux · bash" code={linux} />
           </TabsContent>
-          <TabsContent value="docker">
-            <TerminalBlock lang="Docker · planned" code={docker} />
+          <TabsContent value="windows">
+            <TerminalBlock lang="Windows · powershell" code={windows} />
           </TabsContent>
         </Tabs>
 
@@ -60,7 +77,29 @@ export function Install() {
           verify.
         </p>
 
-        <div className="mt-8 grid sm:grid-cols-3 gap-3">
+        <div className="mt-6 rounded-xl border border-border bg-card/40 px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+          <div className="flex items-center gap-2 shrink-0">
+            <span
+              className="h-2 w-2 rounded-full shrink-0"
+              style={{ background: "var(--brand)" }}
+              aria-hidden
+            />
+            <span className="text-sm font-medium">Want 24/7 uptime?</span>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Run Reverb on a Linux VPS — a $5/mo server stays online while your
+            laptop sleeps. The Linux systemd path handles everything.
+          </p>
+          <div className="flex items-center gap-3 shrink-0 text-xs font-mono text-muted-foreground">
+            <span>macOS</span>
+            <span aria-hidden>·</span>
+            <span className="font-semibold" style={{ color: "var(--brand)" }}>Linux / VPS</span>
+            <span aria-hidden>·</span>
+            <span>Windows</span>
+          </div>
+        </div>
+
+        <div className="mt-6 grid sm:grid-cols-3 gap-3">
           <LinkCard href={GH_DOCS}    label="Docs"           description="Architecture, security model, troubleshooting." />
           <LinkCard href={GH_WHY}     label="Why it exists"  description="The persistence problem, explained." />
           <LinkCard href={GH_RELEASE} label="v0.1.0 release" description="Changelog and release notes." />

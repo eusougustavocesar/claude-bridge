@@ -30,7 +30,7 @@ export function StarsBadge({ size = "sm" }: { size?: "sm" | "lg" }) {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Star Reverb on GitHub"
-      className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md border border-border bg-background/70 hover:bg-background text-xs font-medium transition-colors"
+      className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full border border-border bg-background/70 hover:bg-background text-xs font-medium transition-colors"
     >
       {GH_ICON}
       <span>Star on GitHub</span>

@@ -12,9 +12,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const SITE_URL = "https://bridge-claude.vercel.app";
+const SITE_URL = "https://reverb.eusougustavocesar.com";
 const DESCRIPTION =
-  "Connect your AI CLI to any messaging channel. WhatsApp first, more soon. Mac stays closed, your AI keeps working.";
+  "Connect your AI CLI to any messaging channel. WhatsApp first, more soon. Machine off. AI keeps working.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -29,9 +29,10 @@ export const metadata: Metadata = {
     "claude code",
     "whatsapp",
     "baileys",
-    "launchagent",
     "daemon",
     "gemini-cli",
+    "systemd",
+    "cross-platform",
   ],
   icons: {
     icon: [

@@ -5,11 +5,16 @@ const steps = [
   {
     n: "01",
     title: "Install",
-    body: "Clone the repo, build, and generate your LaunchAgent plist. One script. No Docker, no Twilio, no API keys.",
+    body: "Clone the repo, build, and run the install script. One command registers the daemon for your OS. No Docker, no Twilio, no API keys.",
     code: `git clone https://github.com/eusougustavocesar/reverb.git
 cd reverb
 npm install && npm run build
-bash scripts/install.sh`,
+
+# macOS / Linux
+bash scripts/install.sh
+
+# Windows (PowerShell)
+.\\scripts\\install.ps1`,
     lang: "bash",
   },
   {
@@ -23,20 +28,27 @@ bash scripts/install.sh`,
   },
   {
     n: "03",
-    title: "Start the daemon, close your Mac.",
-    body: "The LaunchAgent takes over. Starts on boot, reconnects on drops, restarts on crash. Message yourself on WhatsApp. Claude replies.",
-    code: `launchctl bootstrap gui/$(id -u) \\
+    title: "Start the daemon, walk away.",
+    body: "The system service takes over. Starts on boot, reconnects on drops, restarts on crash. Message yourself on WhatsApp. Claude replies.",
+    code: `# macOS
+launchctl bootstrap gui/$(id -u) \\
   ~/Library/LaunchAgents/com.$(whoami).reverb.plist
 
+# Linux
+systemctl --user start reverb
+
+# Windows
+Start-ScheduledTask -TaskName "Reverb"
+
 # Done. Message from anywhere.`,
-    lang: "bash",
+    lang: "shell",
   },
 ];
 
 export function HowItWorks() {
   return (
     <section id="how">
-      <div className="mx-auto max-w-5xl px-6 py-24">
+      <div className="mx-auto max-w-5xl px-6 py-16 md:py-24">
         <SectionHeader label="How it works" title="Clone. Pair. Done." />
 
         <ol className="flex flex-col gap-6">
@@ -45,7 +57,7 @@ export function HowItWorks() {
               <div className="grid md:grid-cols-[auto_1fr] gap-6 items-start">
                 <div className="flex md:flex-col items-baseline md:items-start gap-3 md:gap-2 md:w-48 md:sticky md:top-20">
                   <span
-                    className="text-5xl md:text-6xl font-bold font-mono leading-none tabular-nums"
+                    className="text-4xl md:text-6xl font-bold font-mono leading-none tabular-nums"
                     style={{ color: "var(--brand)" }}
                   >
                     {step.n}

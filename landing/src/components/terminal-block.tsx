@@ -12,7 +12,7 @@ export function TerminalBlock({ lang, code }: { lang: string; code: string }) {
           <CopyButton value={code} />
         </div>
       </div>
-      <pre className="p-6 text-xs md:text-sm font-mono overflow-x-auto leading-relaxed text-foreground/90">
+      <pre className="p-4 md:p-6 text-xs md:text-sm font-mono overflow-x-auto leading-relaxed text-foreground/90">
         {code}
       </pre>
     </div>

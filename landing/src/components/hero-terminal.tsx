@@ -47,7 +47,7 @@ export function HeroTerminal() {
             claude
           </span>
           <span className="text-foreground">
-            pong. bridge online, Mac closed.
+            pong. bridge online, machine off.
           </span>
         </div>
       </div>

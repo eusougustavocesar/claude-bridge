@@ -20,7 +20,7 @@ const problems = [
 export function Why() {
   return (
     <section>
-      <div className="mx-auto max-w-5xl px-6 py-24">
+      <div className="mx-auto max-w-5xl px-6 py-16 md:py-24">
         <SectionHeader label="The problem" title="Everything else had a catch." />
 
         <div className="grid md:grid-cols-3 gap-4">
@@ -42,7 +42,7 @@ export function Why() {
           <code className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
             claude --print
           </code>{" "}
-          per message. LaunchAgent-hosted, ~50 MB RAM, no cloud.{" "}
+          per message. Native system service, ~50 MB RAM, no cloud.{" "}
           <a
             href={GH_WHY}
             target="_blank"

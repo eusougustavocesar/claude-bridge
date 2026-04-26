@@ -3,9 +3,9 @@ import { GH, GH_DOCS } from "@/lib/links";
 
 export function SiteFooter() {
   return (
-    <footer className="py-12">
-      <div className="mx-auto max-w-5xl px-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex flex-col gap-2">
+    <footer className="py-10 md:py-12">
+      <div className="mx-auto max-w-5xl px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex flex-col gap-2 items-center sm:items-start">
           <BrandLogo size={28} />
           <p className="text-xs text-muted-foreground max-w-md">
             MIT licensed · Built by{" "}
