@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for considering contributing to claude-bridge!
+Thanks for considering contributing to reverb!
 
 ## Philosophy
 
@@ -30,8 +30,8 @@ When v0.2 lands, adding a new channel should mean implementing a small `Channel`
 ## Development
 
 ```bash
-git clone https://github.com/eusougustavocesar/claude-bridge.git
-cd claude-bridge
+git clone https://github.com/eusougustavocesar/reverb.git
+cd reverb
 npm install
 cp .env.example .env
 # Edit .env as needed

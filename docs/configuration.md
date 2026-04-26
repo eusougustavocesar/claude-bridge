@@ -14,7 +14,7 @@ cp .env.example .env
 |---|---|---|
 | `CLAUDE_BIN` | `claude` | Path to the Claude Code binary. Use `which claude` to find yours. |
 | `CLAUDE_CWD` | `./workspace` | **Sandboxed** working directory where Claude runs. Claude can only read/write files inside this path. **Do not set to `$HOME`** — any WhatsApp compromise would expose your entire home directory. |
-| `CLAUDE_MCP_CONFIG` | `./empty-mcp.json` | Path to an MCP config with empty `mcpServers`. Required to bypass MCP startup hang when spawned from headless daemon. Don't change unless you know what you're doing. |
+| `CLAUDE_MCP_CONFIG` | `./empty-mcp.json` | Path to an MCP config with empty `mcpServers`. Required to bypass MCP startup hang when spawned from a headless service. Don't change unless you know what you're doing. |
 | `CLAUDE_TIMEOUT_SECONDS` | `180` | Max seconds to wait for Claude to respond before killing the subprocess. |
 | `SESSION_MODE` | `continue` | `continue` uses a single rolling session (`claude --continue`); `none` is stateless. |
 
@@ -33,10 +33,14 @@ cp .env.example .env
 
 ## Finding your LID
 
-When you first send a message to yourself via WhatsApp, the bridge logs the incoming JID. Check `/tmp/claude-bridge.log`:
+When you first send a message to yourself via WhatsApp, the bridge logs the incoming JID. Check the service log:
 
 ```bash
-tail -f /tmp/claude-bridge.log
+# macOS / Linux
+tail -f /tmp/reverb.log
+
+# Windows (PowerShell)
+Get-Content "$env:TEMP\reverb.log" -Wait
 ```
 
 Send yourself a message. You'll see something like:
@@ -49,10 +53,17 @@ The `jid` field is your device LID. Add it to `ALLOWED_JIDS` to accept your own 
 
 ## Reloading config
 
-Changes to `.env` require a daemon restart:
+Changes to `.env` require a service restart:
 
 ```bash
-launchctl kickstart -k gui/$(id -u)/com.$(whoami).claude-bridge
+# macOS
+launchctl kickstart -k gui/$(id -u)/com.$(whoami).reverb
+
+# Linux
+systemctl --user restart reverb
+
+# Windows (PowerShell)
+Stop-ScheduledTask -TaskName "Reverb"; Start-ScheduledTask -TaskName "Reverb"
 ```
 
-Or manually during pairing: `Ctrl+C` and `npm run pair` again.
+Or during active pairing: `Ctrl+C` and `npm run pair` again.
