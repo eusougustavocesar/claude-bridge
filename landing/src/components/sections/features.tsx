@@ -1,42 +1,6 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { BentoCard } from "@/components/bento-card";
+import { MiniCode } from "@/components/mini-code";
 import { SectionHeader } from "@/components/section-header";
-
-function BentoCard({
-  title,
-  body,
-  colSpan = 1,
-  children,
-}: {
-  title: string;
-  body: string;
-  colSpan?: 1 | 2;
-  children?: React.ReactNode;
-}) {
-  return (
-    <Card className={`bg-card/40 overflow-hidden ${colSpan === 2 ? "sm:col-span-2" : ""}`}>
-      <CardContent className="flex flex-col gap-3 p-6 h-full">
-        <h3 className="font-semibold text-base">{title}</h3>
-        <p className="text-sm text-muted-foreground leading-relaxed flex-1">{body}</p>
-        {children ? <div className="mt-auto">{children}</div> : null}
-      </CardContent>
-    </Card>
-  );
-}
-
-function MiniCode({ lang, code }: { lang: string; code: string }) {
-  return (
-    <div className="rounded-md border border-border bg-background/60 overflow-hidden">
-      <div className="px-3 py-1.5 border-b border-border">
-        <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-          {lang}
-        </span>
-      </div>
-      <pre className="px-3 py-2 text-[11px] font-mono leading-relaxed text-foreground/80 overflow-x-auto">
-        {code}
-      </pre>
-    </div>
-  );
-}
 
 export function Features() {
   return (
