@@ -4,9 +4,6 @@ import type { MessageContext } from "../handlers/types.js";
 
 // ── Mocks (hoisted) ──────────────────────────────────────────────────────────
 
-vi.mock("../channels/whatsapp/download.js", () => ({
-  downloadMedia: vi.fn(),
-}));
 vi.mock("../lib/transcribe.js", () => ({
   transcribeAudio: vi.fn(),
 }));
@@ -24,7 +21,6 @@ vi.mock("../http/state.js", () => ({
 import { handleAudio } from "../handlers/audio.js";
 import { handlePassthrough } from "../handlers/passthrough.js";
 import { routeMessage } from "../handlers/index.js";
-import { downloadMedia } from "../channels/whatsapp/download.js";
 import { transcribeAudio } from "../lib/transcribe.js";
 import { saveTmpFile, cleanTmpFile } from "../lib/workspace.js";
 import { callClaude } from "../lib/claude.js";
@@ -35,27 +31,15 @@ import { state as bridgeState } from "../http/state.js";
 const logger = pino({ level: "silent" });
 const TEST_JID = "5500000000000@s.whatsapp.net";
 
-function makeSock() {
-  return {
-    sendMessage: vi.fn().mockResolvedValue(undefined),
-    sendPresenceUpdate: vi.fn().mockResolvedValue(undefined),
-  };
-}
-
-function makeMsg(type: string, extra: Record<string, unknown> = {}) {
-  return {
-    key: { remoteJid: TEST_JID, fromMe: false, id: "msg-1" },
-    message: { [type]: { url: "https://example.com/media", ...extra } },
-  };
-}
-
 function makeCtx(overrides: Partial<MessageContext> = {}): MessageContext {
   return {
-    msg: makeMsg("audioMessage") as any,
-    sock: makeSock() as any,
-    jid: TEST_JID,
+    from: TEST_JID,
     msgType: "audioMessage",
     isSelf: true,
+    reply: vi.fn().mockResolvedValue(undefined),
+    sendPresence: vi.fn().mockResolvedValue(undefined),
+    downloadMedia: vi.fn().mockResolvedValue(Buffer.from("media")),
+    caption: "",
     claudeBin: "claude",
     claudeCwd: "/tmp/test-cwd",
     claudeMcpConfig: "/tmp/empty-mcp.json",
@@ -75,15 +59,14 @@ function makeCtx(overrides: Partial<MessageContext> = {}): MessageContext {
 }
 
 function sentTexts(ctx: MessageContext): string[] {
-  return (ctx.sock.sendMessage as ReturnType<typeof vi.fn>).mock.calls.map(
-    (c: any[]) => c[1].text
+  return (ctx.reply as ReturnType<typeof vi.fn>).mock.calls.map(
+    (c: any[]) => c[0]
   );
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
   (bridgeState as any).processed = 0;
-  vi.mocked(downloadMedia).mockResolvedValue(Buffer.from("media"));
   vi.mocked(transcribeAudio).mockResolvedValue("Olá mundo");
   vi.mocked(saveTmpFile).mockResolvedValue("media_123.jpg");
   vi.mocked(cleanTmpFile).mockResolvedValue(undefined);
@@ -99,10 +82,10 @@ describe("handleAudio", () => {
     expect(sentTexts(ctx).some((t) => t.includes("Whisper não está configurado"))).toBe(true);
   });
 
-  it("does not call download when whisperBin is not set", async () => {
+  it("does not call downloadMedia when whisperBin is not set", async () => {
     const ctx = makeCtx({ whisperBin: undefined });
     await handleAudio(ctx);
-    expect(vi.mocked(downloadMedia)).not.toHaveBeenCalled();
+    expect(ctx.downloadMedia).not.toHaveBeenCalled();
   });
 
   it("does not call Claude when whisperBin is not set", async () => {
@@ -112,15 +95,17 @@ describe("handleAudio", () => {
   });
 
   it("sends error message when download fails", async () => {
-    vi.mocked(downloadMedia).mockRejectedValue(new Error("network error"));
-    const ctx = makeCtx();
+    const ctx = makeCtx({
+      downloadMedia: vi.fn().mockRejectedValue(new Error("network error")),
+    });
     await handleAudio(ctx);
     expect(sentTexts(ctx).some((t) => t.includes("Falha ao baixar o áudio"))).toBe(true);
   });
 
   it("does not call Claude when download fails", async () => {
-    vi.mocked(downloadMedia).mockRejectedValue(new Error("fail"));
-    const ctx = makeCtx();
+    const ctx = makeCtx({
+      downloadMedia: vi.fn().mockRejectedValue(new Error("fail")),
+    });
     await handleAudio(ctx);
     expect(vi.mocked(callClaude)).not.toHaveBeenCalled();
   });
@@ -185,6 +170,12 @@ describe("handleAudio", () => {
     await handleAudio(ctx);
     expect(ctx.audit).toHaveBeenCalled();
   });
+
+  it("sends channel-not-supported error when downloadMedia is undefined", async () => {
+    const ctx = makeCtx({ downloadMedia: undefined });
+    await handleAudio(ctx);
+    expect(sentTexts(ctx).some((t) => t.includes("canal não suporta"))).toBe(true);
+  });
 });
 
 // ── handlePassthrough ────────────────────────────────────────────────────────
@@ -192,35 +183,33 @@ describe("handleAudio", () => {
 describe("handlePassthrough", () => {
   function makePassCtx(
     msgType: string,
-    extra: Record<string, unknown> = {},
+    caption = "",
     overrides: Partial<MessageContext> = {}
   ): MessageContext {
-    return makeCtx({
-      msg: makeMsg(msgType, extra) as any,
-      msgType,
-      ...overrides,
-    });
+    return makeCtx({ msgType, caption, ...overrides });
   }
 
   it("sends rate limit message when rate limit is exceeded", async () => {
-    const ctx = makePassCtx("imageMessage", {}, {
+    const ctx = makePassCtx("imageMessage", "", {
       rateLimitAllow: vi.fn().mockReturnValue(false),
     });
     await handlePassthrough(ctx, ".jpg");
     expect(sentTexts(ctx).some((t) => t.includes("Rate limit"))).toBe(true);
-    expect(vi.mocked(downloadMedia)).not.toHaveBeenCalled();
+    expect(ctx.downloadMedia).not.toHaveBeenCalled();
   });
 
   it("sends error when download fails", async () => {
-    vi.mocked(downloadMedia).mockRejectedValue(new Error("download error"));
-    const ctx = makePassCtx("imageMessage");
+    const ctx = makePassCtx("imageMessage", "", {
+      downloadMedia: vi.fn().mockRejectedValue(new Error("download error")),
+    });
     await handlePassthrough(ctx, ".jpg");
     expect(sentTexts(ctx).some((t) => t.includes("Falha ao baixar o arquivo"))).toBe(true);
   });
 
   it("does not call Claude when download fails", async () => {
-    vi.mocked(downloadMedia).mockRejectedValue(new Error("fail"));
-    const ctx = makePassCtx("imageMessage");
+    const ctx = makePassCtx("imageMessage", "", {
+      downloadMedia: vi.fn().mockRejectedValue(new Error("fail")),
+    });
     await handlePassthrough(ctx, ".jpg");
     expect(vi.mocked(callClaude)).not.toHaveBeenCalled();
   });
@@ -241,7 +230,7 @@ describe("handlePassthrough", () => {
 
   it("prompt is just the file path when there is no caption", async () => {
     vi.mocked(saveTmpFile).mockResolvedValue("media_abc.jpg");
-    const ctx = makePassCtx("imageMessage", { caption: "" });
+    const ctx = makePassCtx("imageMessage", "");
     await handlePassthrough(ctx, ".jpg");
     const [prompt] = vi.mocked(callClaude).mock.calls[0];
     expect(prompt).toBe("tmp/media_abc.jpg");
@@ -249,7 +238,7 @@ describe("handlePassthrough", () => {
 
   it("prompt is caption + file path when caption is present", async () => {
     vi.mocked(saveTmpFile).mockResolvedValue("media_abc.jpg");
-    const ctx = makePassCtx("imageMessage", { caption: "O que está escrito?" });
+    const ctx = makePassCtx("imageMessage", "O que está escrito?");
     await handlePassthrough(ctx, ".jpg");
     const [prompt] = vi.mocked(callClaude).mock.calls[0];
     expect(prompt).toBe("O que está escrito?\n\ntmp/media_abc.jpg");
@@ -257,7 +246,7 @@ describe("handlePassthrough", () => {
 
   it("prompt includes document caption for documentMessage", async () => {
     vi.mocked(saveTmpFile).mockResolvedValue("media_doc.pdf");
-    const ctx = makePassCtx("documentMessage", { caption: "Este PDF é o contrato" });
+    const ctx = makePassCtx("documentMessage", "Este PDF é o contrato");
     await handlePassthrough(ctx, ".pdf");
     const [prompt] = vi.mocked(callClaude).mock.calls[0];
     expect(prompt).toContain("Este PDF é o contrato");
@@ -308,7 +297,7 @@ describe("handlePassthrough", () => {
   it("sends composing then paused presence updates", async () => {
     const ctx = makePassCtx("imageMessage");
     await handlePassthrough(ctx, ".jpg");
-    const calls = (ctx.sock.sendPresenceUpdate as ReturnType<typeof vi.fn>).mock.calls;
+    const calls = (ctx.sendPresence as ReturnType<typeof vi.fn>).mock.calls;
     expect(calls[0][0]).toBe("composing");
     expect(calls[1][0]).toBe("paused");
   });
@@ -316,12 +305,18 @@ describe("handlePassthrough", () => {
   it("schedules cleanTmpFile after mediaTmpTtlSeconds", async () => {
     vi.useFakeTimers();
     vi.mocked(saveTmpFile).mockResolvedValue("media_test.jpg");
-    const ctx = makePassCtx("imageMessage", {}, { mediaTmpTtlSeconds: 30 });
+    const ctx = makePassCtx("imageMessage", "", { mediaTmpTtlSeconds: 30 });
     await handlePassthrough(ctx, ".jpg");
     expect(vi.mocked(cleanTmpFile)).not.toHaveBeenCalled();
     vi.advanceTimersByTime(30_000);
     expect(vi.mocked(cleanTmpFile)).toHaveBeenCalledWith("media_test.jpg", ctx.claudeCwd);
     vi.useRealTimers();
+  });
+
+  it("sends channel-not-supported error when downloadMedia is undefined", async () => {
+    const ctx = makePassCtx("imageMessage", "", { downloadMedia: undefined });
+    await handlePassthrough(ctx, ".jpg");
+    expect(sentTexts(ctx).some((t) => t.includes("canal não suporta"))).toBe(true);
   });
 });
 
@@ -343,7 +338,6 @@ describe("routeMessage routing", () => {
   it("routes imageMessage to handlePassthrough (rate limit → rate limit reply)", async () => {
     const ctx = makeCtx({
       msgType: "imageMessage",
-      msg: makeMsg("imageMessage") as any,
       rateLimitAllow: vi.fn().mockReturnValue(false),
     });
     await routeMessage(ctx);
@@ -353,7 +347,6 @@ describe("routeMessage routing", () => {
   it("routes documentMessage to handlePassthrough (rate limit → rate limit reply)", async () => {
     const ctx = makeCtx({
       msgType: "documentMessage",
-      msg: makeMsg("documentMessage") as any,
       rateLimitAllow: vi.fn().mockReturnValue(false),
     });
     await routeMessage(ctx);
@@ -363,7 +356,6 @@ describe("routeMessage routing", () => {
   it("routes stickerMessage to handlePassthrough (rate limit → rate limit reply)", async () => {
     const ctx = makeCtx({
       msgType: "stickerMessage",
-      msg: makeMsg("stickerMessage") as any,
       rateLimitAllow: vi.fn().mockReturnValue(false),
     });
     await routeMessage(ctx);
@@ -378,23 +370,14 @@ describe("routeMessage routing", () => {
 
   it("routes conversation to handleText → calls Claude", async () => {
     vi.mocked(callClaude).mockResolvedValue("text reply");
-    const ctx = makeCtx({
-      msgType: "conversation",
-      msg: { ...makeMsg("conversation"), message: { conversation: "hello" } } as any,
-    });
+    const ctx = makeCtx({ msgType: "conversation", text: "hello" });
     await routeMessage(ctx);
     expect(sentTexts(ctx)).toContain("text reply");
   });
 
   it("routes extendedTextMessage to handleText → calls Claude", async () => {
     vi.mocked(callClaude).mockResolvedValue("ext reply");
-    const ctx = makeCtx({
-      msgType: "extendedTextMessage",
-      msg: {
-        ...makeMsg("extendedTextMessage"),
-        message: { extendedTextMessage: { text: "hi" } },
-      } as any,
-    });
+    const ctx = makeCtx({ msgType: "extendedTextMessage", text: "hi" });
     await routeMessage(ctx);
     expect(sentTexts(ctx)).toContain("ext reply");
   });
@@ -402,6 +385,6 @@ describe("routeMessage routing", () => {
   it("sends nothing for completely unknown message types", async () => {
     const ctx = makeCtx({ msgType: "unknownFutureType" });
     await routeMessage(ctx);
-    expect(vi.mocked(ctx.sock.sendMessage)).not.toHaveBeenCalled();
+    expect(ctx.reply).not.toHaveBeenCalled();
   });
 });

@@ -24,9 +24,7 @@ export async function routeMessage(ctx: MessageContext): Promise<void> {
       await handleAudio(ctx);
       return;
     case "unsupported":
-      await ctx.sock.sendMessage(ctx.jid, {
-        text: `⚠️ ${ctx.msgType} not supported yet.`,
-      });
+      await ctx.reply(`⚠️ ${ctx.msgType} not supported yet.`);
       return;
   }
 }

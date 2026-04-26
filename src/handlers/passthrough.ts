@@ -1,35 +1,15 @@
-import type { WAMessage } from "@whiskeysockets/baileys";
 import { state as bridgeState } from "../http/state.js";
-import { downloadMedia } from "../channels/whatsapp/download.js";
 import { saveTmpFile, cleanTmpFile } from "../lib/workspace.js";
 import { callClaude } from "../lib/claude.js";
 import { chunkText, hashJid } from "../lib/utils.js";
 import type { MessageContext } from "./types.js";
 
-function extractCaption(msg: WAMessage): string {
-  const m = msg.message;
-  if (!m) return "";
-  return (
-    m.imageMessage?.caption ??
-    m.documentMessage?.caption ??
-    m.videoMessage?.caption ??
-    ""
-  );
-}
-
-/**
- * Handles any media format Claude understands natively (images, PDFs, stickers).
- * Downloads the file, saves it to the Claude sandbox, then explicitly instructs
- * Claude to use its Read tool — no format translation needed.
- */
 export async function handlePassthrough(
   ctx: MessageContext,
   ext: string
 ): Promise<void> {
   const {
-    msg,
-    sock,
-    jid,
+    from,
     logger,
     claudeCwd,
     rateLimitAllow,
@@ -37,26 +17,33 @@ export async function handlePassthrough(
     rateLimitWindowMs,
     mediaTmpTtlSeconds,
     audit,
+    reply,
+    sendPresence,
+    downloadMedia,
+    caption = "",
   } = ctx;
 
-  const caption = extractCaption(msg);
-
-  if (!rateLimitAllow(jid)) {
-    await sock.sendMessage(jid, {
-      text: `⚠️ Rate limit: max ${rateLimitMax} msgs per ${rateLimitWindowMs / 1000}s. Slow down.`,
-    });
+  if (!rateLimitAllow(from)) {
+    await reply(
+      `⚠️ Rate limit: max ${rateLimitMax} msgs per ${rateLimitWindowMs / 1000}s. Slow down.`
+    );
     return;
   }
 
-  audit({ jidHash: hashJid(jid), msgType: ctx.msgType, caption: caption.slice(0, 100) });
-  logger.info({ jidHash: hashJid(jid), msgType: ctx.msgType }, "Downloading media");
+  if (!downloadMedia) {
+    await reply("⚠️ Este canal não suporta download de mídia.");
+    return;
+  }
+
+  audit({ fromHash: hashJid(from), msgType: ctx.msgType, caption: caption.slice(0, 100) });
+  logger.info({ fromHash: hashJid(from), msgType: ctx.msgType }, "Downloading media");
 
   let buffer: Buffer;
   try {
-    buffer = await downloadMedia(msg, sock);
+    buffer = await downloadMedia();
   } catch (err) {
     logger.error({ err }, "Failed to download media");
-    await sock.sendMessage(jid, { text: "⚠️ Falha ao baixar o arquivo." });
+    await reply("⚠️ Falha ao baixar o arquivo.");
     return;
   }
 
@@ -65,20 +52,18 @@ export async function handlePassthrough(
     filename = await saveTmpFile(buffer, ext, claudeCwd);
   } catch (err) {
     logger.error({ err }, "Failed to save media to workspace");
-    await sock.sendMessage(jid, { text: "⚠️ Falha ao salvar o arquivo." });
+    await reply("⚠️ Falha ao salvar o arquivo.");
     return;
   }
 
-  const prompt = caption
-    ? `${caption}\n\ntmp/${filename}`
-    : `tmp/${filename}`;
+  const prompt = caption ? `${caption}\n\ntmp/${filename}` : `tmp/${filename}`;
 
-  await sock.sendPresenceUpdate("composing", jid);
+  await sendPresence?.("composing");
   const answer = await callClaude(prompt, ctx);
-  await sock.sendPresenceUpdate("paused", jid);
+  await sendPresence?.("paused");
 
   for (const chunk of chunkText(answer, 3900)) {
-    await sock.sendMessage(jid, { text: chunk });
+    await reply(chunk);
   }
 
   bridgeState.processed += 1;

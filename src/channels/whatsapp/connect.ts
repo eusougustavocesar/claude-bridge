@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import makeWASocket, {
   DisconnectReason,
   fetchLatestBaileysVersion,
+  jidNormalizedUser,
   useMultiFileAuthState,
   type WAMessage,
   type WASocket,
@@ -11,18 +12,49 @@ import qrcode from "qrcode-terminal";
 import qrPng from "qrcode";
 import pino, { type Logger } from "pino";
 import { state as bridgeState } from "../../http/state.js";
+import { downloadMedia } from "./download.js";
+import type { ContextFactory } from "../types.js";
+import type { MessageContext } from "../../handlers/types.js";
 
 export interface WhatsAppConnectOpts {
   repoRoot: string;
   httpHost: string;
   httpPort: number;
+  allowedJids: string[];
   onSockReady: (sock: WASocket) => void;
-  onMessage: (sock: WASocket, msg: WAMessage) => Promise<void>;
+  onMessage: (ctx: MessageContext) => Promise<void>;
+  buildCtx: ContextFactory;
   logger: Logger;
 }
 
+function extractText(msg: WAMessage): string | undefined {
+  const m = msg.message;
+  if (!m) return undefined;
+  return m.conversation ?? m.extendedTextMessage?.text ?? undefined;
+}
+
+function extractCaption(msg: WAMessage): string {
+  const m = msg.message;
+  if (!m) return "";
+  return (
+    m.imageMessage?.caption ??
+    m.documentMessage?.caption ??
+    m.videoMessage?.caption ??
+    ""
+  );
+}
+
 export async function startWhatsApp(opts: WhatsAppConnectOpts): Promise<void> {
-  const { repoRoot, httpHost, httpPort, onSockReady, onMessage, logger } = opts;
+  const {
+    repoRoot,
+    httpHost,
+    httpPort,
+    allowedJids,
+    onSockReady,
+    onMessage,
+    buildCtx,
+    logger,
+  } = opts;
 
   const { state, saveCreds } = await useMultiFileAuthState(
     join(repoRoot, "auth_info")
@@ -63,20 +95,12 @@ export async function startWhatsApp(opts: WhatsAppConnectOpts): Promise<void> {
     if (connection === "open") {
       bridgeState.connection = "connected";
       bridgeState.qr = null;
-      bridgeState.me = {
-        id: sock.user?.id ?? "",
-        name: sock.user?.name ?? null,
-      };
+      bridgeState.me = { id: sock.user?.id ?? "", name: sock.user?.name ?? null };
       bridgeState.lastError = null;
-      logger.info(
-        { me: sock.user?.id, name: sock.user?.name },
-        "Connected to WhatsApp"
-      );
+      logger.info({ me: sock.user?.id, name: sock.user?.name }, "Connected to WhatsApp");
     }
 
-    if (connection === "connecting") {
-      bridgeState.connection = "connecting";
-    }
+    if (connection === "connecting") bridgeState.connection = "connecting";
 
     if (connection === "close") {
       bridgeState.connection = "disconnected";
@@ -84,7 +108,6 @@ export async function startWhatsApp(opts: WhatsAppConnectOpts): Promise<void> {
       const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
       bridgeState.lastError = `statusCode ${statusCode}`;
       logger.warn({ statusCode, shouldReconnect }, "Connection closed");
-
       if (shouldReconnect) {
         setTimeout(() => startWhatsApp(opts), 3000);
       } else {
@@ -98,9 +121,37 @@ export async function startWhatsApp(opts: WhatsAppConnectOpts): Promise<void> {
     if (type !== "notify") return;
     for (const msg of messages) {
       try {
-        await onMessage(sock, msg);
+        if (!msg.message) continue;
+        const jid = msg.key.remoteJid;
+        if (!jid) continue;
+
+        const myJidNorm = sock.user?.id ? jidNormalizedUser(sock.user.id) : undefined;
+        const myLidNorm = (sock.user as any)?.lid
+          ? jidNormalizedUser((sock.user as any).lid)
+          : undefined;
+        const jidNorm = jidNormalizedUser(jid);
+
+        const isSelf = jidNorm === myJidNorm || jidNorm === myLidNorm;
+        if (!isSelf && !allowedJids.includes(jidNorm)) continue;
+
+        const msgType = Object.keys(msg.message)[0] ?? "unknown";
+        const text = extractText(msg);
+        const caption = extractCaption(msg);
+
+        const ctx = buildCtx({
+          from: jid,
+          msgType,
+          isSelf,
+          reply: (t) => sock.sendMessage(jid, { text: t }).then(() => {}),
+          sendPresence: (status) => sock.sendPresenceUpdate(status, jid),
+          downloadMedia: () => downloadMedia(msg, sock),
+          caption,
+        });
+
+        // Inject text for text-type messages
+        await onMessage(text !== undefined ? { ...ctx, text } : ctx);
       } catch (err) {
-        logger.error({ err }, "Error handling message");
+        logger.error({ err }, "Error handling WhatsApp message");
       }
     }
   });

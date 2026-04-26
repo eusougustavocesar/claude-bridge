@@ -6,15 +6,16 @@ import {
 } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { jidNormalizedUser, type WAMessage, type WASocket } from "@whiskeysockets/baileys";
+import { jidNormalizedUser } from "@whiskeysockets/baileys";
 import pino from "pino";
 
 import { createHttpServer } from "./http/server.js";
 import { readEnvFile, writeEnvFile } from "./lib/env.js";
-import { hashJid } from "./lib/utils.js";
 import { startWhatsApp } from "./channels/whatsapp/connect.js";
+import { startTelegram } from "./channels/telegram/connect.js";
 import { routeMessage } from "./handlers/index.js";
 import { startMonitors } from "./monitors/index.js";
+import type { ContextFactory } from "./channels/types.js";
 
 // ============================================================================
 // Config (env)
@@ -60,6 +61,13 @@ const MEDIA_TMP_TTL_SECONDS = Number(env.MEDIA_TMP_TTL_SECONDS) || 60;
 const MONITORS_ENABLED = (env.MONITORS_ENABLED ?? "false").toLowerCase() === "true";
 const MONITORS_CONFIG = resolve(REPO_ROOT, env.MONITORS_CONFIG ?? "./monitors.json");
 
+const TELEGRAM_ENABLED = (env.TELEGRAM_ENABLED ?? "false").toLowerCase() === "true";
+const TELEGRAM_TOKEN = env.TELEGRAM_TOKEN ?? "";
+const TELEGRAM_ALLOWED_IDS = (env.TELEGRAM_ALLOWED_IDS ?? "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 const AUDIT_LOG = join(REPO_ROOT, "logs", "audit.jsonl");
 const logger = pino({ level: "info" });
 
@@ -69,17 +77,17 @@ const logger = pino({ level: "info" });
 
 const rateLimitState = new Map<string, number[]>();
 
-function rateLimitAllow(jid: string): boolean {
+function rateLimitAllow(id: string): boolean {
   const now = Date.now();
-  const timestamps = (rateLimitState.get(jid) ?? []).filter(
+  const timestamps = (rateLimitState.get(id) ?? []).filter(
     (t) => now - t < RATE_LIMIT_WINDOW_MS
   );
   if (timestamps.length >= RATE_LIMIT_MAX) {
-    rateLimitState.set(jid, timestamps);
+    rateLimitState.set(id, timestamps);
     return false;
   }
   timestamps.push(now);
-  rateLimitState.set(jid, timestamps);
+  rateLimitState.set(id, timestamps);
   return true;
 }
 
@@ -131,58 +139,34 @@ function ensureSandbox() {
 ensureSandbox();
 
 // ============================================================================
-// Message dispatcher
+// Context factory — shared config closed over for all channels
 // ============================================================================
 
-async function handleMessage(sock: WASocket, msg: WAMessage): Promise<void> {
-  if (!msg.message) return;
-  const jid = msg.key.remoteJid;
-  if (!jid) return;
-
-  const msgType = Object.keys(msg.message)[0] ?? "unknown";
-
-  const myJidNorm = sock.user?.id
-    ? jidNormalizedUser(sock.user.id)
-    : undefined;
-  const myLidNorm = (sock.user as any)?.lid
-    ? jidNormalizedUser((sock.user as any).lid)
-    : undefined;
-  const jidNorm = jidNormalizedUser(jid);
-
-  const isSelf = jidNorm === myJidNorm || jidNorm === myLidNorm;
-  const isAllowed = ALLOWED_JIDS.includes(jidNorm);
-
-  if (!isSelf && !isAllowed) return;
-
-  await routeMessage({
-    msg,
-    sock,
-    jid,
-    msgType,
-    isSelf,
-    claudeBin: CLAUDE_BIN,
-    claudeCwd: CLAUDE_CWD,
-    claudeMcpConfig: CLAUDE_MCP_CONFIG,
-    claudeTimeoutMs: CLAUDE_TIMEOUT_MS,
-    sessionMode: SESSION_MODE,
-    rateLimitAllow,
-    rateLimitMax: RATE_LIMIT_MAX,
-    rateLimitWindowMs: RATE_LIMIT_WINDOW_MS,
-    audit,
-    logger,
-    whisperBin: AUDIO_ENABLED ? WHISPER_BIN : undefined,
-    whisperModel: WHISPER_MODEL,
-    whisperLanguage: WHISPER_LANGUAGE,
-    mediaTmpTtlSeconds: MEDIA_TMP_TTL_SECONDS,
-  });
-}
+const buildCtx: ContextFactory = (channelOpts) => ({
+  ...channelOpts,
+  claudeBin: CLAUDE_BIN,
+  claudeCwd: CLAUDE_CWD,
+  claudeMcpConfig: CLAUDE_MCP_CONFIG,
+  claudeTimeoutMs: CLAUDE_TIMEOUT_MS,
+  sessionMode: SESSION_MODE,
+  rateLimitAllow,
+  rateLimitMax: RATE_LIMIT_MAX,
+  rateLimitWindowMs: RATE_LIMIT_WINDOW_MS,
+  audit,
+  logger,
+  whisperBin: AUDIO_ENABLED ? WHISPER_BIN : undefined,
+  whisperModel: WHISPER_MODEL,
+  whisperLanguage: WHISPER_LANGUAGE,
+  mediaTmpTtlSeconds: MEDIA_TMP_TTL_SECONDS,
+});
 
 // ============================================================================
 // Entrypoint
 // ============================================================================
 
-let currentSock: WASocket | null = null;
+let currentSock: import("@whiskeysockets/baileys").WASocket | null = null;
 let stopMonitors: (() => void) | null = null;
+let stopTelegram: (() => void) | null = null;
 
 let httpServerInstance: { close: () => void } | null = null;
 if (HTTP_ENABLED) {
@@ -196,6 +180,8 @@ if (HTTP_ENABLED) {
     claudeBin: CLAUDE_BIN,
     claudeCwd: CLAUDE_CWD,
     claudeMcpConfig: CLAUDE_MCP_CONFIG,
+    buildCtx,
+    onMessage: routeMessage,
   });
 }
 
@@ -203,20 +189,43 @@ startWhatsApp({
   repoRoot: REPO_ROOT,
   httpHost: HTTP_HOST,
   httpPort: HTTP_PORT,
+  allowedJids: ALLOWED_JIDS,
   onSockReady: (sock) => {
     currentSock = sock;
     if (MONITORS_ENABLED) stopMonitors = startMonitors(sock, MONITORS_CONFIG, logger);
   },
-  onMessage: handleMessage,
+  onMessage: routeMessage,
+  buildCtx,
   logger,
 }).catch((err) => {
   logger.error({ err }, "Fatal error");
   process.exit(1);
 });
 
+if (TELEGRAM_ENABLED) {
+  if (!TELEGRAM_TOKEN) {
+    logger.error("TELEGRAM_ENABLED=true but TELEGRAM_TOKEN is not set");
+    process.exit(1);
+  }
+  startTelegram({
+    token: TELEGRAM_TOKEN,
+    allowedIds: TELEGRAM_ALLOWED_IDS,
+    buildCtx,
+    onMessage: routeMessage,
+    logger,
+  })
+    .then((stop) => {
+      stopTelegram = stop;
+    })
+    .catch((err) => {
+      logger.error({ err }, "Telegram fatal error");
+    });
+}
+
 const gracefulShutdown = (signal: string) => {
   logger.info({ signal }, "signal received, shutting down");
   stopMonitors?.();
+  stopTelegram?.();
   httpServerInstance?.close();
   process.exit(0);
 };

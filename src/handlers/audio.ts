@@ -1,30 +1,34 @@
-import { downloadMedia } from "../channels/whatsapp/download.js";
 import { transcribeAudio } from "../lib/transcribe.js";
 import { hashJid } from "../lib/utils.js";
 import { handleText } from "./text.js";
 import type { MessageContext } from "./types.js";
 
 export async function handleAudio(ctx: MessageContext): Promise<void> {
-  const { sock, jid, logger, audit, whisperBin, whisperModel, whisperLanguage, msg } = ctx;
+  const { from, logger, audit, whisperBin, whisperModel, whisperLanguage, reply, downloadMedia } = ctx;
 
   if (!whisperBin) {
-    await sock.sendMessage(jid, {
-      text: "⚠️ Áudio recebido, mas Whisper não está configurado. Instale com `pip install openai-whisper` e defina `WHISPER_BIN` no .env.",
-    });
+    await reply(
+      "⚠️ Áudio recebido, mas Whisper não está configurado. Instale com `pip install openai-whisper` e defina `WHISPER_BIN` no .env."
+    );
+    return;
+  }
+
+  if (!downloadMedia) {
+    await reply("⚠️ Este canal não suporta download de mídia.");
     return;
   }
 
   let buffer: Buffer;
   try {
-    buffer = await downloadMedia(msg, sock);
+    buffer = await downloadMedia();
   } catch (err) {
     logger.error({ err }, "Failed to download audio");
-    await sock.sendMessage(jid, { text: "⚠️ Falha ao baixar o áudio." });
+    await reply("⚠️ Falha ao baixar o áudio.");
     return;
   }
 
-  audit({ jidHash: hashJid(jid), msgType: "audio" });
-  logger.info({ jidHash: hashJid(jid) }, "Transcribing audio");
+  audit({ fromHash: hashJid(from), msgType: "audio" });
+  logger.info({ fromHash: hashJid(from) }, "Transcribing audio");
 
   let transcript: string;
   try {
@@ -36,20 +40,15 @@ export async function handleAudio(ctx: MessageContext): Promise<void> {
     });
   } catch (err) {
     logger.error({ err }, "Transcription failed");
-    await sock.sendMessage(jid, {
-      text: "⚠️ Falha na transcrição do áudio.",
-    });
+    await reply("⚠️ Falha na transcrição do áudio.");
     return;
   }
 
   if (!transcript) {
-    await sock.sendMessage(jid, { text: "⚠️ Transcrição vazia." });
+    await reply("⚠️ Transcrição vazia.");
     return;
   }
 
-  // Echo the transcript before Claude's response
-  await sock.sendMessage(jid, { text: `🎤 _${transcript}_` });
-
-  // Route transcribed text through the normal Claude pipeline
+  await reply(`🎤 _${transcript}_`);
   await handleText({ ...ctx, msgType: "text", text: transcript });
 }

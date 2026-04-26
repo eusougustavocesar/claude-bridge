@@ -9,6 +9,8 @@ import pino from "pino";
 import { state, claudeAuth } from "./state.js";
 import { readEnvFile, writeEnvFile } from "../lib/env.js";
 import { formatNotification, type NotifyLevel } from "../lib/notify.js";
+import type { ContextFactory } from "../channels/types.js";
+import type { MessageContext } from "../handlers/types.js";
 
 const logger = pino({ level: "info", name: "http" });
 
@@ -40,6 +42,10 @@ export interface HttpServerOptions {
   claudeCwd: string;
   /** Path to the empty MCP config file to pass to claude subprocesses. */
   claudeMcpConfig: string;
+  /** Context factory for building channel-agnostic MessageContext objects. */
+  buildCtx?: ContextFactory;
+  /** Message handler (routeMessage). Required for /api/chat. */
+  onMessage?: (ctx: MessageContext) => Promise<void>;
 }
 
 export function parseNotifyRoutes(raw: string): Record<string, string> {
@@ -336,6 +342,43 @@ export function createHttpServer(opts: HttpServerOptions) {
       logger.error({ err }, "failed to send notification");
       return c.json({ error: "send failed" }, 500);
     }
+  });
+
+  app.post("/api/chat", async (c) => {
+    if (!opts.buildCtx || !opts.onMessage) {
+      return c.json({ error: "chat not configured" }, 503);
+    }
+
+    const notifyToken = (opts.readEnv().NOTIFY_TOKEN ?? "").trim();
+    if (notifyToken) {
+      const auth = c.req.header("authorization") ?? "";
+      if (auth !== `Bearer ${notifyToken}`) {
+        return c.json({ error: "unauthorized" }, 401);
+      }
+    }
+
+    const body = (await c.req.json().catch(() => null)) as {
+      message?: string;
+      from?: string;
+    } | null;
+
+    if (!body?.message || typeof body.message !== "string") {
+      return c.json({ error: "`message` is required" }, 400);
+    }
+
+    const replies: string[] = [];
+    const from = body.from ?? "http@chat";
+
+    const ctx = opts.buildCtx({
+      from,
+      msgType: "conversation",
+      isSelf: false,
+      reply: async (t) => { replies.push(t); },
+    });
+
+    await opts.onMessage({ ...ctx, text: body.message });
+
+    return c.json({ ok: true, replies });
   });
 
   app.post("/api/stop", (c) => {
