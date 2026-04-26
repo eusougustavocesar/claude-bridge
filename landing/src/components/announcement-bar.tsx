@@ -10,17 +10,10 @@ export function AnnouncementBar() {
           aria-hidden
         />
         <span className="text-muted-foreground">
-          Reverb{" "}
-          <span
-            className="font-mono font-medium"
-            style={{ color: "var(--brand)" }}
-          >
-            v0.6.0
-          </span>{" "}
-          — Telegram + HTTP channel shipped.
+          New version of Reverb available.
         </span>
         <Link
-          href="https://github.com/eusougustavocesar/reverb/releases/tag/v0.6.0"
+          href="https://github.com/eusougustavocesar/reverb/releases"
           target="_blank"
           rel="noopener noreferrer"
           className="font-medium hover:opacity-80 transition-opacity inline-flex items-center gap-1"
