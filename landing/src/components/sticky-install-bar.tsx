@@ -51,7 +51,7 @@ export function StickyInstallBar() {
           : "opacity-0 translate-y-4 pointer-events-none"
       )}
     >
-      <div className="rounded-full border border-border bg-background/95 shadow-2xl shadow-black/50 backdrop-blur flex items-center gap-2 px-3 py-2">
+      <div className="rounded-full border border-border shadow-2xl shadow-black/50 backdrop-blur-md flex items-center gap-2 px-3 py-2" style={{ background: "color-mix(in srgb, var(--background) 45%, transparent)" }}>
         <span
           className="h-2 w-2 rounded-full shrink-0"
           style={{ background: "var(--brand)" }}

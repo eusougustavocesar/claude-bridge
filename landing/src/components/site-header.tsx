@@ -19,7 +19,7 @@ export function SiteHeader() {
         <nav
           className="absolute left-1/2 -translate-x-1/2 hidden sm:flex items-center gap-0.5 px-2 py-1.5 rounded-full border border-border backdrop-blur-md"
           style={{
-            background: "color-mix(in srgb, var(--background) 75%, transparent)",
+            background: "color-mix(in srgb, var(--background) 45%, transparent)",
             boxShadow: "0 1px 4px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)",
           }}
         >

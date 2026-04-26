@@ -34,6 +34,11 @@ export function Hero() {
               <Link
                 href="#install"
                 className={buttonVariants({ variant: "default", size: "lg" })}
+                style={{
+                  background: "color-mix(in srgb, var(--primary) 85%, transparent)",
+                  backdropFilter: "blur(8px)",
+                  WebkitBackdropFilter: "blur(8px)",
+                }}
               >
                 Quickstart
               </Link>

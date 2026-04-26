@@ -10,6 +10,7 @@ import { Features } from "@/components/sections/features";
 import { HowItWorks } from "@/components/sections/how-it-works";
 import { Comparison } from "@/components/sections/comparison";
 import { Install } from "@/components/sections/install";
+import { FadeIn } from "@/components/fade-in";
 
 export default function Home() {
   return (
@@ -17,14 +18,30 @@ export default function Home() {
       <AnnouncementBar />
       <SiteHeader />
       <main className="flex flex-col">
-        <Hero />
-        <Why />
-        <Features />
-        <HowItWorks />
-        <Comparison />
-        <CreatorQuote />
-        <Install />
-        <FAQ />
+        <FadeIn>
+          <Hero />
+        </FadeIn>
+        <FadeIn>
+          <Why />
+        </FadeIn>
+        <FadeIn>
+          <Features />
+        </FadeIn>
+        <FadeIn>
+          <HowItWorks />
+        </FadeIn>
+        <FadeIn>
+          <Comparison />
+        </FadeIn>
+        <FadeIn>
+          <CreatorQuote />
+        </FadeIn>
+        <FadeIn>
+          <Install />
+        </FadeIn>
+        <FadeIn>
+          <FAQ />
+        </FadeIn>
       </main>
       <SiteFooter />
       <StickyInstallBar />
