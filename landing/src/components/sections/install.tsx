@@ -85,7 +85,7 @@ export function Install() {
         <div className="mt-6 grid sm:grid-cols-3 gap-3">
           <LinkCard href={GH_DOCS}    label="Docs"           description="Architecture, security model, troubleshooting." />
           <LinkCard href={GH_WHY}     label="Why it exists"  description="The persistence problem, explained." />
-          <LinkCard href={GH_RELEASE} label="v0.5.0 release" description="Changelog and release notes." />
+          <LinkCard href={GH_RELEASE} label="v0.6.0 release" description="Changelog and release notes." />
         </div>
       </div>
     </section>

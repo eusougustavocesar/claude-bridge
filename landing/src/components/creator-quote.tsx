@@ -24,11 +24,11 @@ export function CreatorQuote() {
             <br />
             <br />
             <span className="text-muted-foreground">
-              So I wrote a ~300-line daemon. It spawns{" "}
+              So I wrote a lightweight daemon. It spawns{" "}
               <code className="font-mono text-base bg-muted px-1.5 py-0.5 rounded">
                 claude --print
               </code>{" "}
-              per message, runs as a LaunchAgent, and uses my existing
+              per message, runs as a system service, and uses my existing
               subscription. Mac closed. Phone in pocket. Claude still replies.
             </span>
           </blockquote>

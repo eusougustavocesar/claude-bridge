@@ -47,8 +47,8 @@ const items = [
     a: "The official plugin lives inside Claude Code. Close Claude Code and the bridge dies. Reverb is a separate process — that's the whole point.",
   },
   {
-    q: "Will there be Telegram, Signal, Discord?",
-    a: "Telegram is next. Signal and Discord are on the roadmap. The adapter architecture is channel-agnostic — adding a new channel is a single file.",
+    q: "Does it work with Telegram?",
+    a: "Yes — Telegram shipped in v0.6.0. Set TELEGRAM_ENABLED=true and TELEGRAM_TOKEN in .env to connect a bot. Signal and Discord are on the roadmap. Adding a new channel is a ~50-line adapter file.",
   },
 ];
 

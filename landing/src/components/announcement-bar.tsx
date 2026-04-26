@@ -15,12 +15,12 @@ export function AnnouncementBar() {
             className="font-mono font-medium"
             style={{ color: "var(--brand)" }}
           >
-            v0.1.0
+            v0.6.0
           </span>{" "}
-          just shipped.
+          — Telegram + HTTP channel shipped.
         </span>
         <Link
-          href="https://github.com/eusougustavocesar/reverb/releases/tag/v0.1.0"
+          href="https://github.com/eusougustavocesar/reverb/releases/tag/v0.6.0"
           target="_blank"
           rel="noopener noreferrer"
           className="font-medium hover:opacity-80 transition-opacity inline-flex items-center gap-1"

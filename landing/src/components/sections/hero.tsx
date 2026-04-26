@@ -15,7 +15,7 @@ export function Hero() {
               variant="outline"
               className="font-mono text-[11px] tracking-wider uppercase"
             >
-              v0.5.0 · early access
+              v0.6.0 · early access
             </Badge>
 
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.05]">
@@ -25,7 +25,7 @@ export function Hero() {
             </h1>
 
             <p className="text-lg text-muted-foreground">
-              Send a WhatsApp message from anywhere.{" "}
+              Message Claude from WhatsApp, Telegram, or any app.{" "}
               <b className="text-foreground">Claude replies.</b> Your machine
               doesn&apos;t even need to be on.
             </p>
