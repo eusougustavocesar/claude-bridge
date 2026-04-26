@@ -7,7 +7,7 @@ import { StarsBadge } from "@/components/stars-badge";
 export function Hero() {
   return (
     <section className="min-h-screen flex items-center">
-      <div className="mx-auto max-w-5xl px-6 py-20 w-full">
+      <div className="mx-auto max-w-5xl px-6 w-full">
         <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
 
           <div className="flex flex-col gap-7">
