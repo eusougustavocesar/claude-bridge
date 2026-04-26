@@ -47,6 +47,17 @@ export function Features() {
             title="Audit log"
             body="Every message logged. JIDs stored as SHA-256 hashes, not phone numbers."
           />
+
+          <BentoCard
+            title="Webhook notifications"
+            body="Any process on the same machine POSTs to /api/notify and you get a WhatsApp message. Monitor your VPS, get deploy alerts, track errors — without exposing anything to the internet."
+            colSpan={2}
+          >
+            <MiniCode
+              lang="bash"
+              code={`curl localhost:3737/api/notify \\\n  -d '{"title":"Deploy failed","level":"error","service":"api"}'`}
+            />
+          </BentoCard>
         </div>
       </div>
     </section>
