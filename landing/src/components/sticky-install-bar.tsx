@@ -22,7 +22,11 @@ export function StickyInstallBar() {
       return;
     }
     const onScroll = () => {
-      setVisible(window.scrollY > window.innerHeight * 0.8);
+      const pastHero = window.scrollY > window.innerHeight * 0.8;
+      const distanceFromBottom =
+        document.documentElement.scrollHeight - window.scrollY - window.innerHeight;
+      const nearFooter = distanceFromBottom < 300;
+      setVisible(pastHero && !nearFooter);
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
