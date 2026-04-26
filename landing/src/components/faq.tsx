@@ -12,35 +12,35 @@ const GH_ISSUES =
 const items = [
   {
     q: "Does it use my Claude Code subscription or require an API key?",
-    a: "Your existing Claude Code subscription, no API key, no extra billing. The daemon spawns `claude --print` as a subprocess, which uses your locally authenticated session just like you would in a terminal.",
+    a: "Your existing Claude Code subscription. No API key, no extra billing. Reverb spawns `claude --print` as a subprocess using your locally authenticated session.",
   },
   {
     q: "Can WhatsApp ban my number?",
-    a: "Possible but historically rare for personal use. reverb uses the WhatsApp multidevice protocol via Baileys (same transport as WhatsApp Web). WhatsApp's ToS doesn't officially bless programmatic clients. For high-volume or commercial use, pair a dedicated number, not your main line.",
+    a: "Rare for personal use, but possible. Reverb uses the same multidevice protocol as WhatsApp Web. Their ToS doesn't officially allow programmatic clients. For automation at volume, use a dedicated number.",
   },
   {
     q: "Is it secure? Can someone on my network control it?",
-    a: "The admin HTTP server binds to 127.0.0.1 only, never exposed to the network. Claude Code runs sandboxed to a scoped working directory (never $HOME by default). Per-chat rate limiting prevents runaway loops. Audit log stores SHA-256 hashes, never phone numbers.",
+    a: "The admin server binds to 127.0.0.1 only — never exposed to the network. Claude runs sandboxed to a scoped directory, never $HOME. Rate limiting prevents runaway loops. The audit log stores SHA-256 hashes, not phone numbers.",
   },
   {
-    q: "Does it work on Linux or just macOS?",
-    a: "v0.1 ships with a macOS LaunchAgent installer. The daemon itself is pure Node, any Linux with Node 20+ can run it via `npm run start` or nohup. A proper systemd unit is on the v0.3 roadmap.",
+    q: "Does it work on Linux?",
+    a: "The daemon runs on any Node 20+ host. v0.1 ships with a macOS LaunchAgent. A systemd unit is on the v0.3 roadmap — until then, nohup works fine.",
   },
   {
     q: "What happens when my Mac sleeps?",
-    a: "WhatsApp socket disconnects, daemon auto-reconnects when the Mac wakes. For true 24/7 availability, run the daemon on a mini-server or Linux VPS. It's one Node process.",
+    a: "The WhatsApp socket drops. When the Mac wakes, Reverb auto-reconnects. For true 24/7 uptime, run it on a Linux VPS or mini-server — it's one Node process.",
   },
   {
-    q: "Can I use it with Claude Code Max or team plans?",
-    a: "Yes. The daemon is agnostic to your plan. Whatever `claude --print` supports, reverb supports.",
+    q: "Does it work with Claude Code Max or team plans?",
+    a: "Yes. If `claude --print` works for your plan, Reverb works.",
   },
   {
-    q: "Why not use the official Anthropic plugin marketplace?",
-    a: "The official WhatsApp channel plugin only runs inside the Claude Code process. Close Claude Code and the bridge dies. reverb is a separate daemon. That's the whole point.",
+    q: "Why not the official Anthropic plugin?",
+    a: "The official plugin lives inside Claude Code. Close Claude Code and the bridge dies. Reverb is a separate process — that's the whole point.",
   },
   {
-    q: "Will there be more channels (Telegram, Signal)?",
-    a: "Telegram is the next planned channel. Signal and Discord are on the roadmap. The daemon architecture is channel-agnostic, adapters plug in.",
+    q: "Will there be Telegram, Signal, Discord?",
+    a: "Telegram is next. Signal and Discord are on the roadmap. The adapter architecture is channel-agnostic — adding a new channel is a single file.",
   },
 ];
 
@@ -53,7 +53,7 @@ export function FAQ() {
             FAQ
           </span>
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
-            Questions I&apos;d ask too.
+            Questions you&apos;d ask too.
           </h2>
         </div>
 
@@ -71,7 +71,7 @@ export function FAQ() {
         </Accordion>
 
         <p className="mt-8 text-sm text-muted-foreground">
-          Didn&apos;t find your answer?{" "}
+          Still have questions?{" "}
           <Link
             href={GH_ISSUES}
             target="_blank"

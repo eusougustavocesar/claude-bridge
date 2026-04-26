@@ -18,9 +18,9 @@ export function CreatorQuote() {
           </span>
 
           <blockquote className="text-xl md:text-2xl font-medium tracking-tight leading-snug text-foreground">
-            I wanted to use Claude Code from my phone. The official plugin
-            died when I closed Claude Code. Docker alternatives ate 4 GB of
-            RAM for a chat bridge. Twilio wanted money.
+            I wanted to use Claude Code from my phone. The official plugin died
+            the moment I closed the CLI. Docker ate 4 GB of RAM for a chat
+            bridge. Twilio wanted a business account.
             <br />
             <br />
             <span className="text-muted-foreground">
@@ -28,8 +28,8 @@ export function CreatorQuote() {
               <code className="font-mono text-base bg-muted px-1.5 py-0.5 rounded">
                 claude --print
               </code>{" "}
-              per message, runs as a LaunchAgent, uses my existing Claude
-              subscription. Mac can be closed. Phone still gets replies.
+              per message, runs as a LaunchAgent, and uses my existing
+              subscription. Mac closed. Phone in pocket. Claude still replies.
             </span>
           </blockquote>
 

@@ -67,9 +67,9 @@ function Hero() {
             </h1>
 
             <p className="text-lg text-muted-foreground">
-              <b className="text-foreground">Reverb</b> is a lightweight daemon
-              that connects any messaging channel to your AI CLI. Close your
-              laptop. Your AI keeps working.
+              Send a WhatsApp message from anywhere.{" "}
+              <b className="text-foreground">Claude replies.</b> Your Mac
+              doesn&apos;t even need to be open.
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
@@ -110,16 +110,16 @@ function Hero() {
 function Why() {
   const problems = [
     {
-      title: "Official plugins die with Claude Code",
-      body: "Anthropic's WhatsApp channel plugin only runs while Claude Code is open. Close the CLI and the bridge is gone. Useless away from your desk.",
+      title: "Plugins die with Claude Code",
+      body: "Anthropic's WhatsApp plugin only lives inside Claude Code. Close the CLI and the bridge goes with it. Useless the moment you step away.",
     },
     {
-      title: "Docker alternatives are heavy",
-      body: "Running a WhatsApp bridge in a 2–4 GB Linux VM 24/7 on your laptop is overkill for a personal tool.",
+      title: "Docker is 4 GB of overkill",
+      body: "A full Linux VM running 24/7 just to relay a chat message. Wrong tool for a personal assistant.",
     },
     {
-      title: "Twilio requires a budget",
-      body: "Business API, paid tokens, a verified phone number. Good for SaaS, wrong tool for a dev assistant.",
+      title: "Twilio bills you",
+      body: "A verified business number, API tokens, ongoing costs. Built for SaaS products, not a dev's daily driver.",
     },
   ];
 
@@ -131,7 +131,7 @@ function Why() {
             The problem
           </span>
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight max-w-2xl">
-            Every existing option had a wall.
+            Everything else had a catch.
           </h2>
         </div>
         <div className="grid md:grid-cols-3 gap-4">
@@ -147,19 +147,19 @@ function Why() {
           ))}
         </div>
         <p className="mt-10 text-sm text-muted-foreground max-w-2xl">
-          reverb is a separate process that holds the WhatsApp socket alive
-          and spawns{" "}
+          Reverb is a separate process. It holds the WhatsApp socket alive and
+          spawns{" "}
           <code className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
             claude --print
           </code>{" "}
-          per message. LaunchAgent-hosted, 50 MB RAM, no cloud.{" "}
+          per message. LaunchAgent-hosted, ~50 MB RAM, no cloud.{" "}
           <a
             href={GH_WHY}
             target="_blank"
             rel="noopener noreferrer"
             className="text-foreground hover:opacity-80 underline underline-offset-4"
           >
-            Read the full story →
+            Read the full writeup →
           </a>
         </p>
       </div>
@@ -180,7 +180,7 @@ function Features() {
             Features
           </span>
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight max-w-2xl">
-            Everything you&apos;d expect. Nothing you wouldn&apos;t.
+            Built to run unattended.
           </h2>
         </div>
 
@@ -189,7 +189,7 @@ function Features() {
           {/* Big card — WhatsApp channel + snippet */}
           <BentoCard
             title="WhatsApp channel"
-            body="Multidevice linked-device protocol via Baileys. No Business API, no cloud."
+            body="Linked-device protocol via Baileys. No Business API, no phone number hosting, no cloud relay."
             colSpan={2}
           >
             <MiniCode
@@ -200,37 +200,32 @@ function Features() {
             />
           </BentoCard>
 
-          {/* Small — Persistence */}
           <BentoCard
             title="Persistent"
-            body="macOS LaunchAgent. Auto-restart, auto-reconnect, ~50 MB RAM."
+            body="LaunchAgent on macOS. Starts on boot, restarts on crash, reconnects on network drops."
           />
 
-          {/* Small — Sandboxed */}
           <BentoCard
             title="Sandboxed"
-            body="Claude runs inside a scoped cwd. Your $HOME stays yours."
+            body="Claude runs inside a scoped working directory. Your $HOME is off-limits."
           />
 
-          {/* Small — Rate-limited */}
           <BentoCard
             title="Rate-limited"
-            body="Per-chat token bucket keeps runaway loops from burning your subscription."
+            body="Per-chat token bucket. Runaway loops won't burn your subscription."
           />
 
-          {/* Big card — Admin UI + snippet */}
           <BentoCard
-            title="Admin UI included"
-            body="Localhost dashboard for pairing, config, logs, and kill switch."
+            title="Admin UI"
+            body="Local dashboard at 127.0.0.1:3737. Pair your phone, edit config, read logs, kill the daemon."
             colSpan={2}
           >
             <MiniCode lang="url" code="http://127.0.0.1:3737/" />
           </BentoCard>
 
-          {/* Small — Audit log */}
           <BentoCard
-            title="Hashed audit log"
-            body="Every processed message recorded. JIDs are SHA-256 hashes, never phone numbers."
+            title="Audit log"
+            body="Every message logged. JIDs stored as SHA-256 hashes, not phone numbers."
           />
         </div>
       </div>
@@ -289,8 +284,8 @@ function HowItWorks() {
   const steps = [
     {
       n: "01",
-      title: "Install the daemon",
-      body: "Clone, build, and generate a LaunchAgent plist. One script. No Docker, no Twilio, no API keys.",
+      title: "Install",
+      body: "Clone the repo, build, and generate your LaunchAgent plist. One script. No Docker, no Twilio, no API keys.",
       code: `git clone https://github.com/eusougustavocesar/reverb.git
 cd reverb
 npm install && npm run build
@@ -300,7 +295,7 @@ bash scripts/install.sh`,
     {
       n: "02",
       title: "Pair your phone",
-      body: "Scan a QR once. Baileys connects as a WhatsApp linked device, same protocol as WhatsApp Web. Auth persists across reboots.",
+      body: "Scan a QR from your terminal. Reverb registers as a WhatsApp linked device, same protocol as WhatsApp Web. Auth survives reboots.",
       code: `npm run pair
 # → QR renders in terminal
 # → WhatsApp > Settings > Linked Devices > Link a Device`,
@@ -308,12 +303,12 @@ bash scripts/install.sh`,
     },
     {
       n: "03",
-      title: "Start the daemon. Close your Mac.",
-      body: "LaunchAgent takes over. Auto-start on boot, auto-reconnect, ~50 MB RAM. Message yourself on WhatsApp, Claude replies.",
+      title: "Start the daemon, close your Mac.",
+      body: "The LaunchAgent takes over. Starts on boot, reconnects on drops, restarts on crash. Message yourself on WhatsApp. Claude replies.",
       code: `launchctl bootstrap gui/$(id -u) \\
   ~/Library/LaunchAgents/com.$(whoami).reverb.plist
 
-# You're done. Message from anywhere.`,
+# Done. Message from anywhere.`,
       lang: "bash",
     },
   ];
@@ -326,7 +321,7 @@ bash scripts/install.sh`,
             How it works
           </span>
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight max-w-2xl">
-            Three steps from clone to working daemon.
+            Clone. Pair. Done.
           </h2>
         </div>
 
@@ -372,10 +367,9 @@ bash scripts/install.sh`,
         </ol>
 
         <p className="mt-12 text-sm text-muted-foreground max-w-2xl">
-          Under the hood: the daemon and Claude Code are separate processes
-          with independent lifecycles. The WhatsApp socket stays alive for
-          hours; each Claude invocation exits in seconds. That&apos;s why it
-          works when plugin-based bridges don&apos;t.
+          The daemon and Claude Code run as independent processes. The WhatsApp
+          socket stays alive for hours; each Claude invocation exits in seconds.
+          That&apos;s why Reverb works when plugin-based bridges don&apos;t.
         </p>
       </div>
     </section>
@@ -440,7 +434,7 @@ function Comparison() {
             Prior art
           </span>
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight max-w-2xl">
-            Honest comparison.
+            Why not the alternatives?
           </h2>
         </div>
 
@@ -456,7 +450,7 @@ function Comparison() {
                 <th className="text-left font-medium p-4">
                   <span className="inline-flex items-center gap-1.5">
                     <BrandLogo size={16} showWord={false} />
-                    reverb
+                    Reverb
                   </span>
                 </th>
                 <th className="text-left font-medium p-4 text-muted-foreground whitespace-nowrap">
@@ -551,7 +545,7 @@ nohup npm run start > reverb.log 2>&1 &`;
             Install
           </span>
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight max-w-2xl">
-            Up and running in 5 minutes.
+            Clone to daemon in 5 minutes.
           </h2>
         </div>
 
@@ -574,26 +568,26 @@ nohup npm run start > reverb.log 2>&1 &`;
         </Tabs>
 
         <p className="mt-6 text-sm text-muted-foreground max-w-2xl">
-          That&apos;s it. The daemon runs on boot, reconnects through
-          network drops, and restarts if it crashes. Message yourself on
-          WhatsApp to test.
+          Boot it once. It handles the rest — starts on login, reconnects on
+          network drops, restarts on crash. Message yourself on WhatsApp to
+          verify.
         </p>
 
         <div className="mt-8 grid sm:grid-cols-3 gap-3">
           <LinkCard
             href={GH_DOCS}
             label="Docs"
-            description="Architecture, security, troubleshooting."
+            description="Architecture, security model, troubleshooting."
           />
           <LinkCard
             href={GH_WHY}
-            label="Why this exists"
-            description="Bug hunt writeup."
+            label="Why it exists"
+            description="The persistence problem, explained."
           />
           <LinkCard
             href={GH_RELEASE}
             label="v0.1.0 release"
-            description="Changelog and binaries."
+            description="Changelog and release notes."
           />
         </div>
       </div>
