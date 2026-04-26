@@ -4,44 +4,21 @@ import { SectionHeader } from "@/components/section-header";
 const steps = [
   {
     n: "01",
-    title: "Install",
-    body: "Clone the repo, build, and run the install script. One command registers the daemon for your OS. No Docker, no Twilio, no API keys.",
+    title: "Clone, install, and start.",
+    body: "One command clones the repo, builds, registers the system service for your OS, and starts the daemon. No Docker, no Twilio, no API keys.",
     code: `git clone https://github.com/eusougustavocesar/reverb.git
-cd reverb
-npm install && npm run build
-
-# macOS / Linux
-bash scripts/install.sh
-
-# Windows (PowerShell)
-.\\scripts\\install.ps1`,
+cd reverb && npm install && npm run setup`,
     lang: "bash",
   },
   {
     n: "02",
-    title: "Pair your phone",
-    body: "Scan a QR from your terminal. Reverb registers as a WhatsApp linked device, same protocol as WhatsApp Web. Auth survives reboots.",
+    title: "Pair your phone. Done.",
+    body: "Scan the QR from your terminal. Reverb registers as a WhatsApp linked device — same protocol as WhatsApp Web. Auth survives reboots.",
     code: `npm run pair
 # → QR renders in terminal
-# → WhatsApp > Settings > Linked Devices > Link a Device`,
+# iOS:     WhatsApp › Settings › Linked Devices › Link a Device
+# Android: WhatsApp › ⋮ Menu  › Linked Devices › Link a Device`,
     lang: "bash",
-  },
-  {
-    n: "03",
-    title: "Start the daemon, walk away.",
-    body: "The system service takes over. Starts on boot, reconnects on drops, restarts on crash. Message yourself on WhatsApp. Claude replies.",
-    code: `# macOS
-launchctl bootstrap gui/$(id -u) \\
-  ~/Library/LaunchAgents/com.$(whoami).reverb.plist
-
-# Linux
-systemctl --user start reverb
-
-# Windows
-Start-ScheduledTask -TaskName "Reverb"
-
-# Done. Message from anywhere.`,
-    lang: "shell",
   },
 ];
 
@@ -49,7 +26,7 @@ export function HowItWorks() {
   return (
     <section id="how">
       <div className="mx-auto max-w-5xl px-6 py-16 md:py-24">
-        <SectionHeader label="How it works" title="Clone. Pair. Done." />
+        <SectionHeader label="How it works" title="Two commands. That's it." />
 
         <ol className="flex flex-col gap-6">
           {steps.map((step) => (
