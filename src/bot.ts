@@ -1,75 +1,63 @@
-import { spawn } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync, appendFileSync, mkdirSync } from "node:fs";
+import {
+  existsSync,
+  writeFileSync,
+  appendFileSync,
+  mkdirSync,
+} from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
-import qrcode from "qrcode-terminal";
-import qrPng from "qrcode";
+import { jidNormalizedUser, type WAMessage, type WASocket } from "@whiskeysockets/baileys";
 import pino from "pino";
 
-import makeWASocket, {
-  DisconnectReason,
-  fetchLatestBaileysVersion,
-  jidNormalizedUser,
-  useMultiFileAuthState,
-  type WAMessage,
-  type WASocket,
-} from "@whiskeysockets/baileys";
-
-import { state as bridgeState } from "./http/state.js";
 import { createHttpServer } from "./http/server.js";
-import { chunkText, hashJid } from "./lib/utils.js";
 import { readEnvFile, writeEnvFile } from "./lib/env.js";
+import { hashJid } from "./lib/utils.js";
+import { startWhatsApp } from "./channels/whatsapp/connect.js";
+import { routeMessage } from "./handlers/index.js";
 
 // ============================================================================
 // Config (env)
 // ============================================================================
 
-const ENV_PATH = join(dirname(fileURLToPath(import.meta.url)), "..", ".env");
-const envFromFile = readEnvFile(ENV_PATH);
+const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const ENV_PATH = join(REPO_ROOT, ".env");
 
-const REPO_ROOT = resolve(
-  dirname(fileURLToPath(import.meta.url)),
-  ".."
-);
+const env = readEnvFile(ENV_PATH);
 
-const CLAUDE_BIN =
-  envFromFile.CLAUDE_BIN ?? process.env.CLAUDE_BIN ?? "claude";
-const CLAUDE_CWD = resolve(
-  REPO_ROOT,
-  envFromFile.CLAUDE_CWD ?? process.env.CLAUDE_CWD ?? "./workspace"
-);
+const CLAUDE_BIN = env.CLAUDE_BIN ?? process.env.CLAUDE_BIN ?? "claude";
+const CLAUDE_CWD = resolve(REPO_ROOT, env.CLAUDE_CWD ?? "./workspace");
 const CLAUDE_MCP_CONFIG = resolve(
   REPO_ROOT,
-  envFromFile.CLAUDE_MCP_CONFIG ??
-    process.env.CLAUDE_MCP_CONFIG ??
-    "./empty-mcp.json"
+  env.CLAUDE_MCP_CONFIG ?? "./empty-mcp.json"
 );
-const CLAUDE_TIMEOUT_MS =
-  (Number(envFromFile.CLAUDE_TIMEOUT_SECONDS) || 180) * 1000;
-const SESSION_MODE = (envFromFile.SESSION_MODE ?? "continue").toLowerCase();
+const CLAUDE_TIMEOUT_MS = (Number(env.CLAUDE_TIMEOUT_SECONDS) || 180) * 1000;
+const SESSION_MODE = (env.SESSION_MODE ?? "continue").toLowerCase();
 
-const ALLOWED_JIDS = (envFromFile.ALLOWED_JIDS ?? "")
+const ALLOWED_JIDS = (env.ALLOWED_JIDS ?? "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean)
   .map((j) => jidNormalizedUser(j));
 
-const RATE_LIMIT_MAX = Number(envFromFile.RATE_LIMIT_MAX) || 10;
+const RATE_LIMIT_MAX = Number(env.RATE_LIMIT_MAX) || 10;
 const RATE_LIMIT_WINDOW_MS =
-  (Number(envFromFile.RATE_LIMIT_WINDOW_SECONDS) || 60) * 1000;
+  (Number(env.RATE_LIMIT_WINDOW_SECONDS) || 60) * 1000;
 
 const HTTP_ENABLED =
-  (envFromFile.HTTP_ENABLED ?? "true").toLowerCase() !== "false";
-const HTTP_HOST = envFromFile.HTTP_HOST ?? "127.0.0.1";
-const HTTP_PORT = Number(envFromFile.HTTP_PORT) || 3737;
+  (env.HTTP_ENABLED ?? "true").toLowerCase() !== "false";
+const HTTP_HOST = env.HTTP_HOST ?? "127.0.0.1";
+const HTTP_PORT = Number(env.HTTP_PORT) || 3737;
+
+const AUDIO_ENABLED = (env.AUDIO_ENABLED ?? "false").toLowerCase() === "true";
+const WHISPER_BIN = env.WHISPER_BIN ?? "whisper";
+const WHISPER_MODEL = env.WHISPER_MODEL ?? "base";
+const WHISPER_LANGUAGE = env.WHISPER_LANGUAGE ?? undefined;
+
+const IMAGE_ENABLED = (env.IMAGE_ENABLED ?? "false").toLowerCase() === "true";
+const MEDIA_TMP_TTL_SECONDS = Number(env.MEDIA_TMP_TTL_SECONDS) || 60;
 
 const AUDIT_LOG = join(REPO_ROOT, "logs", "audit.jsonl");
-
 const logger = pino({ level: "info" });
-
-// Ensure sandbox exists and is a directory we own
-ensureSandbox();
 
 // ============================================================================
 // Rate limiter (in-memory, per-chat)
@@ -98,256 +86,13 @@ function rateLimitAllow(jid: string): boolean {
 function audit(event: Record<string, unknown>) {
   try {
     mkdirSync(dirname(AUDIT_LOG), { recursive: true });
-    const line = JSON.stringify({ ts: new Date().toISOString(), ...event }) + "\n";
-    appendFileSync(AUDIT_LOG, line);
+    appendFileSync(
+      AUDIT_LOG,
+      JSON.stringify({ ts: new Date().toISOString(), ...event }) + "\n"
+    );
   } catch {
     /* best-effort — never block on audit */
   }
-}
-
-// ============================================================================
-// WhatsApp connection
-// ============================================================================
-
-async function main() {
-  const { state, saveCreds } = await useMultiFileAuthState(
-    join(REPO_ROOT, "auth_info")
-  );
-
-  const { version, isLatest } = await fetchLatestBaileysVersion();
-  logger.info({ version, isLatest }, "Using WhatsApp Web version");
-
-  const sock: WASocket = makeWASocket({
-    auth: state,
-    version,
-    browser: ["reverb", "Chrome", "1.0.0"],
-    logger: pino({ level: "silent" }) as any,
-  });
-  currentSock = sock;
-
-  sock.ev.on("creds.update", saveCreds);
-
-  sock.ev.on("connection.update", (update) => {
-    const { connection, lastDisconnect, qr } = update;
-    if (qr) {
-      bridgeState.connection = "pairing";
-      bridgeState.qr = qr;
-      const pngPath = join(tmpdir(), "reverb-qr.png");
-      qrPng
-        .toFile(pngPath, qr, { scale: 10, margin: 2 })
-        .then(() =>
-          console.log(
-            `\nQR also saved as PNG: ${pngPath}\nOr scan in the browser: http://${HTTP_HOST}:${HTTP_PORT}/pair`
-          )
-        )
-        .catch((err) => console.error("PNG save failed:", err));
-      console.log("\nScan this QR with your WhatsApp mobile app:");
-      console.log("(WhatsApp > Settings > Linked Devices > Link a Device)\n");
-      qrcode.generate(qr);
-    }
-    if (connection === "open") {
-      bridgeState.connection = "connected";
-      bridgeState.qr = null;
-      bridgeState.me = {
-        id: sock.user?.id ?? "",
-        name: sock.user?.name ?? null,
-      };
-      bridgeState.lastError = null;
-      logger.info(
-        { me: sock.user?.id, name: sock.user?.name },
-        "Connected to WhatsApp"
-      );
-    }
-    if (connection === "connecting") {
-      bridgeState.connection = "connecting";
-    }
-    if (connection === "close") {
-      bridgeState.connection = "disconnected";
-      const statusCode = (lastDisconnect?.error as any)?.output?.statusCode;
-      const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
-      bridgeState.lastError = `statusCode ${statusCode}`;
-      logger.warn({ statusCode, shouldReconnect }, "Connection closed");
-      if (shouldReconnect) {
-        setTimeout(main, 3000);
-      } else {
-        logger.error("Logged out. Delete auth_info/ and re-pair.");
-        process.exit(1);
-      }
-    }
-  });
-
-  sock.ev.on("messages.upsert", async ({ messages, type }) => {
-    if (type !== "notify") return;
-    for (const msg of messages) {
-      try {
-        await handleMessage(sock, msg);
-      } catch (err) {
-        logger.error({ err }, "Error handling message");
-      }
-    }
-  });
-}
-
-// ============================================================================
-// Message handling
-// ============================================================================
-
-async function handleMessage(sock: WASocket, msg: WAMessage) {
-  if (!msg.message) return;
-  const jid = msg.key.remoteJid;
-  if (!jid) return;
-
-  const msgType = Object.keys(msg.message)[0] ?? "unknown";
-
-  // Self-chat detection (WhatsApp uses LID for self messages in recent versions)
-  const myJidNorm = sock.user?.id
-    ? jidNormalizedUser(sock.user.id)
-    : undefined;
-  const myLidNorm = (sock.user as any)?.lid
-    ? jidNormalizedUser((sock.user as any).lid)
-    : undefined;
-  const jidNorm = jidNormalizedUser(jid);
-
-  const matchesSelf = jidNorm === myJidNorm || jidNorm === myLidNorm;
-  const isAllowed = ALLOWED_JIDS.includes(jidNorm);
-
-  if (!matchesSelf && !isAllowed) return;
-
-  // Extract text
-  const text =
-    msg.message.conversation ||
-    msg.message.extendedTextMessage?.text ||
-    undefined;
-
-  // Notify on unsupported message types
-  if (!text) {
-    const mediaTypes = [
-      "audioMessage",
-      "imageMessage",
-      "videoMessage",
-      "documentMessage",
-      "stickerMessage",
-    ];
-    if (mediaTypes.includes(msgType)) {
-      await sock.sendMessage(jid, {
-        text: `⚠️ ${msgType} not supported yet. Only text messages for now.`,
-      });
-    }
-    return;
-  }
-
-  // Kill switch
-  if (text.trim() === "/stop" && matchesSelf) {
-    await sock.sendMessage(jid, {
-      text: "🛑 reverb stopping. To restart: `launchctl kickstart` (macOS), `systemctl --user start reverb` (Linux), or `Start-ScheduledTask -TaskName Reverb` (Windows).",
-    });
-    logger.warn("Kill switch activated via /stop");
-    process.exit(0);
-  }
-
-  // Help command
-  if (text.trim() === "/help") {
-    await sock.sendMessage(jid, {
-      text: [
-        "reverb commands:",
-        "• Any text → sent to Claude Code",
-        "• /help → this message",
-        "• /stop → shut down the bridge",
-        "",
-        `Rate limit: ${RATE_LIMIT_MAX} msgs / ${RATE_LIMIT_WINDOW_MS / 1000}s`,
-      ].join("\n"),
-    });
-    return;
-  }
-
-  // Reject other slash commands (reserved)
-  if (text.startsWith("/")) {
-    await sock.sendMessage(jid, {
-      text: "⚠️ Unknown command. Try /help.",
-    });
-    return;
-  }
-
-  // Rate limit
-  if (!rateLimitAllow(jid)) {
-    await sock.sendMessage(jid, {
-      text: `⚠️ Rate limit: max ${RATE_LIMIT_MAX} msgs per ${RATE_LIMIT_WINDOW_MS / 1000}s. Slow down.`,
-    });
-    return;
-  }
-
-  // Audit (hashed JID — no raw phone numbers stored)
-  audit({
-    jidHash: hashJid(jid),
-    msgType,
-    preview: text.slice(0, 100),
-  });
-
-  logger.info({ jidHash: hashJid(jid), preview: text.slice(0, 80) }, "Dispatching to Claude");
-
-  await sock.sendPresenceUpdate("composing", jid);
-  const answer = await callClaude(text);
-  await sock.sendPresenceUpdate("paused", jid);
-
-  // Chunk long responses to fit WhatsApp's ~4096 char limit
-  for (const chunk of chunkText(answer, 3900)) {
-    await sock.sendMessage(jid, { text: chunk });
-  }
-
-  bridgeState.processed += 1;
-}
-
-
-// ============================================================================
-// Claude subprocess
-// ============================================================================
-
-function callClaude(prompt: string): Promise<string> {
-  return new Promise((resolve) => {
-    // --mcp-config pointing to an empty server map disables MCP startup,
-    // which hangs under LaunchAgent (no TTY). OAuth / keychain auth still
-    // works (that requires NOT using --bare).
-    const args: string[] = [
-      "--print",
-      "--mcp-config",
-      CLAUDE_MCP_CONFIG,
-      "--no-session-persistence",
-    ];
-    if (SESSION_MODE === "continue") args.push("--continue");
-
-    const child = spawn(CLAUDE_BIN, args, {
-      cwd: CLAUDE_CWD,
-      env: { ...process.env, CI: "1" },
-      stdio: ["pipe", "pipe", "pipe"],
-    });
-
-    let stdout = "";
-    let stderr = "";
-    const timer = setTimeout(() => child.kill("SIGTERM"), CLAUDE_TIMEOUT_MS);
-
-    child.stdout.on("data", (d) => (stdout += d.toString()));
-    child.stderr.on("data", (d) => (stderr += d.toString()));
-
-    child.on("error", (err) => {
-      clearTimeout(timer);
-      logger.error({ err }, "spawn error");
-      resolve(`⚠️ Error invoking Claude: ${err.message}`);
-    });
-
-    child.on("close", (code) => {
-      clearTimeout(timer);
-      if (code === 0) {
-        resolve(stdout.trim() || "(empty response)");
-      } else {
-        logger.warn({ code, stderr }, "claude exited non-zero");
-        const tail = (stderr || stdout).trim().slice(-1500);
-        resolve(`⚠️ Claude exited with code ${code}.\n${tail}`);
-      }
-    });
-
-    child.stdin.write(prompt);
-    child.stdin.end();
-  });
 }
 
 // ============================================================================
@@ -359,33 +104,81 @@ function ensureSandbox() {
     mkdirSync(CLAUDE_CWD, { recursive: true });
     const claudeMd = join(CLAUDE_CWD, "CLAUDE.md");
     if (!existsSync(claudeMd)) {
-      const content = [
-        "# reverb sandbox",
-        "",
-        "This directory is the sandbox for the reverb daemon.",
-        "Claude Code has read/write access ONLY to files inside this directory.",
-        "It cannot access files outside of it unless `CLAUDE_CWD` is reconfigured.",
-        "",
-        "Use this space for temporary artifacts, notes, or files you want Claude",
-        "to work with via WhatsApp.",
-        "",
-      ].join("\n");
-      writeFileSync(claudeMd, content);
+      writeFileSync(
+        claudeMd,
+        [
+          "# reverb sandbox",
+          "",
+          "This directory is the sandbox for the reverb daemon.",
+          "Claude Code has read/write access ONLY to files inside this directory.",
+          "It cannot access files outside of it unless `CLAUDE_CWD` is reconfigured.",
+          "",
+          "Use this space for temporary artifacts, notes, or files you want Claude",
+          "to work with via WhatsApp.",
+          "",
+        ].join("\n")
+      );
     }
   } catch (err) {
     logger.warn({ err, cwd: CLAUDE_CWD }, "Could not initialize sandbox");
   }
 }
 
+ensureSandbox();
+
+// ============================================================================
+// Message dispatcher
+// ============================================================================
+
+async function handleMessage(sock: WASocket, msg: WAMessage): Promise<void> {
+  if (!msg.message) return;
+  const jid = msg.key.remoteJid;
+  if (!jid) return;
+
+  const msgType = Object.keys(msg.message)[0] ?? "unknown";
+
+  const myJidNorm = sock.user?.id
+    ? jidNormalizedUser(sock.user.id)
+    : undefined;
+  const myLidNorm = (sock.user as any)?.lid
+    ? jidNormalizedUser((sock.user as any).lid)
+    : undefined;
+  const jidNorm = jidNormalizedUser(jid);
+
+  const isSelf = jidNorm === myJidNorm || jidNorm === myLidNorm;
+  const isAllowed = ALLOWED_JIDS.includes(jidNorm);
+
+  if (!isSelf && !isAllowed) return;
+
+  await routeMessage({
+    msg,
+    sock,
+    jid,
+    msgType,
+    isSelf,
+    claudeBin: CLAUDE_BIN,
+    claudeCwd: CLAUDE_CWD,
+    claudeMcpConfig: CLAUDE_MCP_CONFIG,
+    claudeTimeoutMs: CLAUDE_TIMEOUT_MS,
+    sessionMode: SESSION_MODE,
+    rateLimitAllow,
+    rateLimitMax: RATE_LIMIT_MAX,
+    rateLimitWindowMs: RATE_LIMIT_WINDOW_MS,
+    audit,
+    logger,
+    whisperBin: AUDIO_ENABLED ? WHISPER_BIN : undefined,
+    whisperModel: WHISPER_MODEL,
+    whisperLanguage: WHISPER_LANGUAGE,
+    mediaTmpTtlSeconds: MEDIA_TMP_TTL_SECONDS,
+  });
+}
 
 // ============================================================================
 // Entrypoint
 // ============================================================================
 
-// Mutable ref updated each time main() creates a new socket (including reconnects)
 let currentSock: WASocket | null = null;
 
-// Start HTTP admin server (optional)
 let httpServerInstance: { close: () => void } | null = null;
 if (HTTP_ENABLED) {
   httpServerInstance = createHttpServer({
@@ -401,7 +194,16 @@ if (HTTP_ENABLED) {
   });
 }
 
-main().catch((err) => {
+startWhatsApp({
+  repoRoot: REPO_ROOT,
+  httpHost: HTTP_HOST,
+  httpPort: HTTP_PORT,
+  onSockReady: (sock) => {
+    currentSock = sock;
+  },
+  onMessage: handleMessage,
+  logger,
+}).catch((err) => {
   logger.error({ err }, "Fatal error");
   process.exit(1);
 });

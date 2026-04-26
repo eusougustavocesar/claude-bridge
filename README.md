@@ -202,6 +202,47 @@ api-server stopped after 3 retries
 
 Since the API is bound to `127.0.0.1`, it's only reachable from the same machine — no need to expose it to the internet.
 
+## Audio transcription
+
+Enable voice message support by installing [openai-whisper](https://github.com/openai/whisper) and setting two env vars:
+
+```bash
+pip install openai-whisper   # also requires ffmpeg in PATH
+```
+
+```env
+AUDIO_ENABLED=true
+WHISPER_BIN=whisper          # or full path from `which whisper`
+WHISPER_MODEL=base           # tiny | base | small | medium | large
+WHISPER_LANGUAGE=pt          # ISO 639-1 code — speeds up transcription
+```
+
+When someone sends a voice message, reverb:
+1. Downloads the audio buffer from WhatsApp
+2. Runs it through Whisper locally
+3. Echoes the transcript (`🎤 _...transcript..._`)
+4. Forwards the text to Claude and replies with the response
+
+No cloud, no API key — Whisper runs entirely on your machine.
+
+## Image support
+
+Enable image processing by setting:
+
+```env
+IMAGE_ENABLED=true
+MEDIA_TMP_TTL_SECONDS=60   # seconds to keep tmp file after Claude reads it
+```
+
+When someone sends an image, reverb:
+1. Downloads the image buffer from WhatsApp
+2. Saves it to `CLAUDE_CWD/tmp/<filename>.jpg`
+3. Sends Claude a prompt referencing that file path
+4. Claude reads the image (using its file-access in the sandbox) and replies
+5. The temp file is deleted after `MEDIA_TMP_TTL_SECONDS`
+
+Any caption on the image is included as context in the prompt.
+
 ## Comparison
 
 | | reverb | [Rich627/whatsapp-claude-plugin][rich627] | [osisdie/claude-code-channels][osisdie] | Twilio + API |
@@ -238,9 +279,11 @@ See [`docs/security.md`](docs/security.md) for threat model and hardening tips.
 
 - [x] v0.1 — WhatsApp channel, LaunchAgent (macOS), sandboxing, rate limiting
 - [x] v0.1 — systemd user service (Linux/VPS), Task Scheduler (Windows)
+- [x] v0.1 — Inbound webhook notifications (`POST /api/notify`)
+- [x] v0.4 — Audio transcription via Whisper (local, no API key)
+- [x] v0.4 — Image support via Claude's file-reading sandbox
 - [ ] v0.2 — Telegram channel (plug-in adapter)
 - [ ] v0.3 — Session per chat (multi-conversation context isolation)
-- [ ] v0.4 — Media: audio (whisper transcription), images (vision)
 - [ ] v0.5 — Slash commands framework (`/reset`, `/session new`, `/status`)
 - [ ] v1.0 — Homebrew formula, signed release binaries
 

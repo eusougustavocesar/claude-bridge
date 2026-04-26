@@ -35,6 +35,10 @@ const items = [
     a: "Yes — that's a built-in use case. Any process on the same machine can POST to http://localhost:3737/api/notify with a title, body, level (error/warning/info/success), and service name. Reverb formats and delivers it as a WhatsApp message. The endpoint binds to 127.0.0.1 only, so nothing is exposed to the internet.",
   },
   {
+    q: "Can I send voice messages and images?",
+    a: "Yes. Voice messages are transcribed locally with Whisper (pip install openai-whisper) — no API key required. Images are saved to Claude's sandbox and read directly. Both features are opt-in via AUDIO_ENABLED and IMAGE_ENABLED in .env.",
+  },
+  {
     q: "Does it work with Claude Code Max or team plans?",
     a: "Yes. If `claude --print` works for your plan, Reverb works.",
   },

@@ -58,6 +58,16 @@ export function Features() {
               code={`curl localhost:3737/api/notify \\\n  -d '{"title":"Deploy failed","level":"error","service":"api"}'`}
             />
           </BentoCard>
+
+          <BentoCard
+            title="Voice messages"
+            body="Send a voice message, get a text reply. Whisper transcribes locally — no API key, no cloud, no extra billing."
+          />
+
+          <BentoCard
+            title="Images"
+            body="Send an image (with or without caption) and Claude reads it from the sandbox. Vision, OCR, document parsing — just send it."
+          />
         </div>
       </div>
     </section>
