@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +14,8 @@ const LINKS = [
 
 export function Nav() {
   const pathname = usePathname();
+  const [host, setHost] = useState("localhost:3737");
+  useEffect(() => { setHost(window.location.host); }, []);
   const normalize = (p: string) => p.replace(/\/$/, "") || "/";
   const current = normalize(pathname);
 
@@ -48,7 +51,7 @@ export function Nav() {
 
         <div className="ml-auto">
           <span className="text-xs font-mono text-muted-foreground">
-            {typeof window !== "undefined" ? window.location.host : "localhost:3737"}
+            {host}
           </span>
         </div>
       </div>
