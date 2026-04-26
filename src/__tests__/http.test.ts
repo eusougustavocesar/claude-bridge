@@ -74,6 +74,7 @@ describe("GET /api/status", () => {
     expect(json).toMatchObject({
       connection: expect.any(String),
       processed: expect.any(Number),
+      notified: expect.any(Number),
       uptimeMs: expect.any(Number),
       hasQr: expect.any(Boolean),
     });
@@ -209,20 +210,129 @@ describe("POST /api/notify", () => {
     delete envStore.NOTIFY_TOKEN;
   });
 
-  it("returns 200 and sends message when connected", async () => {
+  // ── happy path ──────────────────────────────────────────────────────────────
+
+  it("returns 200 with ok: true and sent: true", async () => {
     const res = await fetch(`${BASE}/api/notify`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ title: "Deploy ok", level: "success", service: "api" }),
+      body: JSON.stringify({ title: "Deploy ok" }),
     });
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.ok).toBe(true);
     expect(json.sent).toBe(true);
-    expect(mockSentMessages).toHaveLength(1);
-    expect(mockSentMessages[0].text).toContain("Deploy ok");
-    expect(mockSentMessages[0].text).toContain("🟢");
   });
+
+  it("dispatches exactly one WhatsApp message per call", async () => {
+    await fetch(`${BASE}/api/notify`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "ping" }),
+    });
+    expect(mockSentMessages).toHaveLength(1);
+  });
+
+  it("message text contains the title", async () => {
+    await fetch(`${BASE}/api/notify`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "Deploy ok", level: "success", service: "api" }),
+    });
+    expect(mockSentMessages[0].text).toContain("Deploy ok");
+  });
+
+  it("message text contains the correct level emoji", async () => {
+    await fetch(`${BASE}/api/notify`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "x", level: "error" }),
+    });
+    expect(mockSentMessages[0].text).toContain("🔴");
+  });
+
+  it("message text contains service in italic format", async () => {
+    await fetch(`${BASE}/api/notify`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "x", service: "my-service" }),
+    });
+    expect(mockSentMessages[0].text).toContain("_my-service_");
+  });
+
+  it("message text contains body when provided", async () => {
+    await fetch(`${BASE}/api/notify`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "x", body: "server stopped unexpectedly" }),
+    });
+    expect(mockSentMessages[0].text).toContain("server stopped unexpectedly");
+  });
+
+  it("message text contains reverb footer", async () => {
+    await fetch(`${BASE}/api/notify`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "x" }),
+    });
+    expect(mockSentMessages[0].text).toMatch(/— reverb · \d{2}:\d{2}/);
+  });
+
+  // ── JID resolution ──────────────────────────────────────────────────────────
+
+  it("uses NOTIFY_JID from env as target", async () => {
+    envStore.NOTIFY_JID = "5511111111111@s.whatsapp.net";
+    await fetch(`${BASE}/api/notify`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "x" }),
+    });
+    expect(mockSentMessages[0].jid).toBe("5511111111111@s.whatsapp.net");
+  });
+
+  it("`to` field overrides NOTIFY_JID", async () => {
+    envStore.NOTIFY_JID = "5511111111111@s.whatsapp.net";
+    const override = "5599999999999@s.whatsapp.net";
+    await fetch(`${BASE}/api/notify`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "x", to: override }),
+    });
+    expect(mockSentMessages[0].jid).toBe(override);
+  });
+
+  it("returns 400 when no JID is resolvable", async () => {
+    delete envStore.NOTIFY_JID;
+    // state.me is null in tests (no real WhatsApp connection)
+    const res = await fetch(`${BASE}/api/notify`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "no jid" }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  // ── counter ─────────────────────────────────────────────────────────────────
+
+  it("increments notified counter on success", async () => {
+    const before = await fetch(`${BASE}/api/status`)
+      .then((r) => r.json())
+      .then((j) => j.notified as number);
+
+    await fetch(`${BASE}/api/notify`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "counter test" }),
+    });
+
+    const after = await fetch(`${BASE}/api/status`)
+      .then((r) => r.json())
+      .then((j) => j.notified as number);
+
+    expect(after).toBe(before + 1);
+  });
+
+  // ── validation ──────────────────────────────────────────────────────────────
 
   it("returns 400 when title is missing", async () => {
     const res = await fetch(`${BASE}/api/notify`, {
@@ -233,14 +343,41 @@ describe("POST /api/notify", () => {
     expect(res.status).toBe(400);
   });
 
-  it("returns 401 when token is wrong", async () => {
+  it("returns 400 when title is an empty string", async () => {
+    const res = await fetch(`${BASE}/api/notify`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "" }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 400 when body is invalid JSON", async () => {
+    const res = await fetch(`${BASE}/api/notify`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "not json at all",
+    });
+    expect(res.status).toBe(400);
+  });
+
+  // ── auth ────────────────────────────────────────────────────────────────────
+
+  it("returns 401 when token is set and Authorization header is wrong", async () => {
     envStore.NOTIFY_TOKEN = "secret123";
     const res = await fetch(`${BASE}/api/notify`, {
       method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: "Bearer wrong",
-      },
+      headers: { "content-type": "application/json", authorization: "Bearer wrong" },
+      body: JSON.stringify({ title: "test" }),
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 401 when token is set and Authorization header is absent", async () => {
+    envStore.NOTIFY_TOKEN = "secret123";
+    const res = await fetch(`${BASE}/api/notify`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({ title: "test" }),
     });
     expect(res.status).toBe(401);
@@ -250,27 +387,24 @@ describe("POST /api/notify", () => {
     envStore.NOTIFY_TOKEN = "secret123";
     const res = await fetch(`${BASE}/api/notify`, {
       method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: "Bearer secret123",
-      },
+      headers: { "content-type": "application/json", authorization: "Bearer secret123" },
       body: JSON.stringify({ title: "authorized" }),
     });
     expect(res.status).toBe(200);
   });
 
-  it("uses `to` field in body as target JID", async () => {
-    const targetJid = "5599999999999@s.whatsapp.net";
-    await fetch(`${BASE}/api/notify`, {
+  it("allows requests without auth when no token is configured", async () => {
+    const res = await fetch(`${BASE}/api/notify`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ title: "custom jid", to: targetJid }),
+      body: JSON.stringify({ title: "open" }),
     });
-    expect(mockSentMessages[0]?.jid).toBe(targetJid);
+    expect(res.status).toBe(200);
   });
 
+  // ── not connected ───────────────────────────────────────────────────────────
+
   it("returns 503 when getSock returns null", async () => {
-    // Create a second server on a different port with getSock: () => null
     const { createHttpServer: createServer } = await import("../http/server.js");
     const nullSockServer = createServer({
       host: "127.0.0.1",
@@ -288,6 +422,27 @@ describe("POST /api/notify", () => {
       body: JSON.stringify({ title: "test" }),
     });
     expect(res.status).toBe(503);
+    nullSockServer.close();
+  });
+
+  it("does not dispatch a message when returning 503", async () => {
+    const { createHttpServer: createServer } = await import("../http/server.js");
+    const nullSockServer = createServer({
+      host: "127.0.0.1",
+      port: 39993,
+      readEnv: () => ({ NOTIFY_JID: "5500@s.whatsapp.net" }),
+      writeEnv: () => {},
+      getSock: () => null,
+      claudeBin: "claude",
+      claudeCwd: testDir,
+      claudeMcpConfig: join(testDir, "empty-mcp.json"),
+    });
+    await fetch("http://127.0.0.1:39993/api/notify", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "test" }),
+    });
+    expect(mockSentMessages).toHaveLength(0);
     nullSockServer.close();
   });
 });
