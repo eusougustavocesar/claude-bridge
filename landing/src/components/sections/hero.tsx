@@ -15,7 +15,7 @@ export function Hero() {
               variant="outline"
               className="font-mono text-[11px] tracking-wider uppercase"
             >
-              v0.4.0 · early access
+              v0.5.0 · early access
             </Badge>
 
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-[1.05]">

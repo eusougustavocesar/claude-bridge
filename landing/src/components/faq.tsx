@@ -32,7 +32,7 @@ const items = [
   },
   {
     q: "Can I use it to monitor my VPS and get alerts on WhatsApp?",
-    a: "Yes — that's a built-in use case. Any process on the same machine can POST to http://localhost:3737/api/notify with a title, body, level (error/warning/info/success), and service name. Reverb formats and delivers it as a WhatsApp message. The endpoint binds to 127.0.0.1 only, so nothing is exposed to the internet.",
+    a: "Yes — two ways. The monitors engine (monitors.json) runs active health checks on URLs and shell scripts on a schedule, alerting you when a service goes down or a job fails. For passive alerts, any process can POST to http://localhost:3737/api/notify with a title, body, level, and service name. Both bind to localhost only — nothing is exposed to the internet.",
   },
   {
     q: "Can I send voice messages and images?",

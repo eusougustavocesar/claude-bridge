@@ -60,6 +60,17 @@ export function Features() {
           </BentoCard>
 
           <BentoCard
+            title="Monitors"
+            body="Active health checks and scheduled shell jobs — configured in a single JSON file. Alerts when a service goes down, recovers, or a cron script exits non-zero."
+            colSpan={2}
+          >
+            <MiniCode
+              lang="json"
+              code={`{ "name": "api", "type": "http",\n  "url": "http://localhost:3000/health",\n  "interval": "5m", "jid": "..." }`}
+            />
+          </BentoCard>
+
+          <BentoCard
             title="Voice messages"
             body="Send a voice message, get a text reply. Whisper transcribes locally — no API key, no cloud, no extra billing."
           />
