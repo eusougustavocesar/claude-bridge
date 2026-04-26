@@ -1,24 +1,20 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { buttonVariants } from "@/components/ui/button";
 import { BrandLogo } from "@/components/brand";
 import { SiteHeader } from "@/components/site-header";
 import { AnnouncementBar } from "@/components/announcement-bar";
-import { CopyButton } from "@/components/copy-button";
 import { CreatorQuote } from "@/components/creator-quote";
 import { FAQ } from "@/components/faq";
-import { SetupTimeChart } from "@/components/setup-time-chart";
-import { HeroTerminal } from "@/components/hero-terminal";
 import { StarsBadge } from "@/components/stars-badge";
 import { StickyInstallBar } from "@/components/sticky-install-bar";
-
-const GH = "https://github.com/eusougustavocesar/reverb";
-const GH_DOCS = `${GH}/tree/main/docs`;
-const GH_WHY = `${GH}/blob/main/docs/why-persistence.md`;
-const GH_RELEASE = `${GH}/releases/tag/v0.1.0`;
+import { Why } from "@/components/sections/why";
+import { Features } from "@/components/sections/features";
+import { HowItWorks } from "@/components/sections/how-it-works";
+import { Comparison } from "@/components/sections/comparison";
+import { Install } from "@/components/sections/install";
+import { GH, GH_DOCS } from "@/lib/links";
 
 export default function Home() {
   return (
@@ -41,17 +37,12 @@ export default function Home() {
   );
 }
 
-// ============================================================================
-// Hero
-// ============================================================================
-
 function Hero() {
   return (
     <section className="border-b border-border">
       <div className="mx-auto max-w-5xl px-6 pt-20 pb-20">
         <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
 
-          {/* Left: text */}
           <div className="flex flex-col gap-7">
             <Badge
               variant="outline"
@@ -81,14 +72,12 @@ function Hero() {
                 Quickstart
               </Link>
             </div>
-
           </div>
 
-          {/* Right: demo GIF */}
           <div className="flex justify-center">
             <Image
               src="/demo.gif"
-              alt="Sending a prompt from WhatsApp, Claude replies — Mac is asleep the whole time."
+              alt="Sending a prompt from WhatsApp, Claude replies. Mac is asleep the whole time."
               width={480}
               height={566}
               className="rounded-xl w-full max-w-md"
@@ -102,550 +91,6 @@ function Hero() {
     </section>
   );
 }
-
-// ============================================================================
-// Why
-// ============================================================================
-
-function Why() {
-  const problems = [
-    {
-      title: "Plugins die with Claude Code",
-      body: "Anthropic's WhatsApp plugin only lives inside Claude Code. Close the CLI and the bridge goes with it. Useless the moment you step away.",
-    },
-    {
-      title: "Docker is 4 GB of overkill",
-      body: "A full Linux VM running 24/7 just to relay a chat message. Wrong tool for a personal assistant.",
-    },
-    {
-      title: "Twilio bills you",
-      body: "A verified business number, API tokens, ongoing costs. Built for SaaS products, not a dev's daily driver.",
-    },
-  ];
-
-  return (
-    <section className="border-b border-border">
-      <div className="mx-auto max-w-5xl px-6 py-20">
-        <div className="flex flex-col items-start gap-3 mb-12">
-          <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
-            The problem
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight max-w-2xl">
-            Everything else had a catch.
-          </h2>
-        </div>
-        <div className="grid md:grid-cols-3 gap-4">
-          {problems.map((p) => (
-            <Card key={p.title} className="bg-card/40">
-              <CardContent className="flex flex-col gap-2 pt-6">
-                <h3 className="font-semibold text-base">{p.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {p.body}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        <p className="mt-10 text-sm text-muted-foreground max-w-2xl">
-          Reverb is a separate process. It holds the WhatsApp socket alive and
-          spawns{" "}
-          <code className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
-            claude --print
-          </code>{" "}
-          per message. LaunchAgent-hosted, ~50 MB RAM, no cloud.{" "}
-          <a
-            href={GH_WHY}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-foreground hover:opacity-80 underline underline-offset-4"
-          >
-            Read the full writeup →
-          </a>
-        </p>
-      </div>
-    </section>
-  );
-}
-
-// ============================================================================
-// Features
-// ============================================================================
-
-function Features() {
-  return (
-    <section id="features" className="border-b border-border">
-      <div className="mx-auto max-w-5xl px-6 py-20">
-        <div className="flex flex-col items-start gap-3 mb-12">
-          <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
-            Features
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight max-w-2xl">
-            Built to run unattended.
-          </h2>
-        </div>
-
-        {/* Bento: 4-col grid, cards span 1 or 2 cols */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-[220px]">
-          {/* Big card — WhatsApp channel + snippet */}
-          <BentoCard
-            title="WhatsApp channel"
-            body="Linked-device protocol via Baileys. No Business API, no phone number hosting, no cloud relay."
-            colSpan={2}
-          >
-            <MiniCode
-              lang="bash"
-              code={`$ npm run pair
-→ QR in terminal
-→ scan in WhatsApp`}
-            />
-          </BentoCard>
-
-          <BentoCard
-            title="Persistent"
-            body="LaunchAgent on macOS. Starts on boot, restarts on crash, reconnects on network drops."
-          />
-
-          <BentoCard
-            title="Sandboxed"
-            body="Claude runs inside a scoped working directory. Your $HOME is off-limits."
-          />
-
-          <BentoCard
-            title="Rate-limited"
-            body="Per-chat token bucket. Runaway loops won't burn your subscription."
-          />
-
-          <BentoCard
-            title="Admin UI"
-            body="Local dashboard at 127.0.0.1:3737. Pair your phone, edit config, read logs, kill the daemon."
-            colSpan={2}
-          >
-            <MiniCode lang="url" code="http://127.0.0.1:3737/" />
-          </BentoCard>
-
-          <BentoCard
-            title="Audit log"
-            body="Every message logged. JIDs stored as SHA-256 hashes, not phone numbers."
-          />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function BentoCard({
-  title,
-  body,
-  colSpan = 1,
-  children,
-}: {
-  title: string;
-  body: string;
-  colSpan?: 1 | 2;
-  children?: React.ReactNode;
-}) {
-  return (
-    <Card
-      className={`bg-card/40 overflow-hidden ${
-        colSpan === 2 ? "sm:col-span-2" : ""
-      }`}
-    >
-      <CardContent className="flex flex-col gap-3 p-6 h-full">
-        <h3 className="font-semibold text-base">{title}</h3>
-        <p className="text-sm text-muted-foreground leading-relaxed flex-1">
-          {body}
-        </p>
-        {children ? <div className="mt-auto">{children}</div> : null}
-      </CardContent>
-    </Card>
-  );
-}
-
-function MiniCode({ lang, code }: { lang: string; code: string }) {
-  return (
-    <div className="rounded-md border border-border bg-background/60 overflow-hidden">
-      <div className="px-3 py-1.5 border-b border-border flex items-center justify-between">
-        <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-          {lang}
-        </span>
-      </div>
-      <pre className="px-3 py-2 text-[11px] font-mono leading-relaxed text-foreground/80 overflow-x-auto">
-        {code}
-      </pre>
-    </div>
-  );
-}
-
-// ============================================================================
-// How it works
-// ============================================================================
-
-function HowItWorks() {
-  const steps = [
-    {
-      n: "01",
-      title: "Install",
-      body: "Clone the repo, build, and generate your LaunchAgent plist. One script. No Docker, no Twilio, no API keys.",
-      code: `git clone https://github.com/eusougustavocesar/reverb.git
-cd reverb
-npm install && npm run build
-bash scripts/install.sh`,
-      lang: "bash",
-    },
-    {
-      n: "02",
-      title: "Pair your phone",
-      body: "Scan a QR from your terminal. Reverb registers as a WhatsApp linked device, same protocol as WhatsApp Web. Auth survives reboots.",
-      code: `npm run pair
-# → QR renders in terminal
-# → WhatsApp > Settings > Linked Devices > Link a Device`,
-      lang: "bash",
-    },
-    {
-      n: "03",
-      title: "Start the daemon, close your Mac.",
-      body: "The LaunchAgent takes over. Starts on boot, reconnects on drops, restarts on crash. Message yourself on WhatsApp. Claude replies.",
-      code: `launchctl bootstrap gui/$(id -u) \\
-  ~/Library/LaunchAgents/com.$(whoami).reverb.plist
-
-# Done. Message from anywhere.`,
-      lang: "bash",
-    },
-  ];
-
-  return (
-    <section id="how" className="border-b border-border">
-      <div className="mx-auto max-w-5xl px-6 py-20">
-        <div className="flex flex-col items-start gap-3 mb-12">
-          <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
-            How it works
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight max-w-2xl">
-            Clone. Pair. Done.
-          </h2>
-        </div>
-
-        <ol className="flex flex-col gap-6">
-          {steps.map((step) => (
-            <li key={step.n}>
-              <div className="grid md:grid-cols-[auto_1fr] gap-6 items-start">
-                {/* Step number column */}
-                <div className="flex md:flex-col items-baseline md:items-start gap-3 md:gap-2 md:w-48 md:sticky md:top-20">
-                  <span
-                    className="text-5xl md:text-6xl font-bold font-mono leading-none tabular-nums"
-                    style={{ color: "var(--brand)" }}
-                  >
-                    {step.n}
-                  </span>
-                  <div className="flex flex-col gap-1">
-                    <h3 className="text-xl font-semibold tracking-tight">
-                      {step.title}
-                    </h3>
-                  </div>
-                </div>
-
-                {/* Body + code */}
-                <div className="flex flex-col gap-4 min-w-0">
-                  <p className="text-sm text-muted-foreground leading-relaxed max-w-xl">
-                    {step.body}
-                  </p>
-                  <div className="rounded-xl border border-border bg-card/40 overflow-hidden relative">
-                    <div className="flex items-center justify-between px-4 py-2 border-b border-border">
-                      <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
-                        {step.lang}
-                      </span>
-                      <CopyButton value={step.code} />
-                    </div>
-                    <pre className="p-4 text-xs md:text-sm font-mono overflow-x-auto leading-relaxed text-foreground/90">
-                      {step.code}
-                    </pre>
-                  </div>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ol>
-
-        <p className="mt-12 text-sm text-muted-foreground max-w-2xl">
-          The daemon and Claude Code run as independent processes. The WhatsApp
-          socket stays alive for hours; each Claude invocation exits in seconds.
-          That&apos;s why Reverb works when plugin-based bridges don&apos;t.
-        </p>
-      </div>
-    </section>
-  );
-}
-
-// ============================================================================
-// Comparison
-// ============================================================================
-
-function Comparison() {
-  const rows = [
-    {
-      feature: "Persists when Claude Code closes",
-      cb: "yes",
-      rich: "no",
-      osisdie: "yes",
-      twilio: "yes",
-    },
-    {
-      feature: "Uses your Claude Code subscription",
-      cb: "yes",
-      rich: "yes",
-      osisdie: "yes",
-      twilio: "no",
-    },
-    {
-      feature: "Runtime footprint",
-      cb: "~50 MB",
-      rich: "0 (in CC)",
-      osisdie: "2–4 GB",
-      twilio: "cloud",
-    },
-    {
-      feature: "Install",
-      cb: "1 script",
-      rich: "plugin",
-      osisdie: "docker",
-      twilio: "complex",
-    },
-    {
-      feature: "Multi-channel",
-      cb: "WA + more",
-      rich: "WA only",
-      osisdie: "5 channels",
-      twilio: "any",
-    },
-    {
-      feature: "Open source",
-      cb: "MIT",
-      rich: "yes",
-      osisdie: "yes",
-      twilio: "varies",
-    },
-  ];
-
-  return (
-    <section className="border-b border-border">
-      <div className="mx-auto max-w-5xl px-6 py-20">
-        <div className="flex flex-col items-start gap-3 mb-12">
-          <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
-            Prior art
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight max-w-2xl">
-            Why not the alternatives?
-          </h2>
-        </div>
-
-        <div className="mb-8">
-          <SetupTimeChart />
-        </div>
-
-        <div className="overflow-x-auto rounded-xl border border-border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-card/40">
-                <th className="text-left font-medium p-4">&nbsp;</th>
-                <th className="text-left font-medium p-4">
-                  <span className="inline-flex items-center gap-1.5">
-                    <BrandLogo size={16} showWord={false} />
-                    Reverb
-                  </span>
-                </th>
-                <th className="text-left font-medium p-4 text-muted-foreground whitespace-nowrap">
-                  Rich627/whatsapp-claude-plugin
-                </th>
-                <th className="text-left font-medium p-4 text-muted-foreground whitespace-nowrap">
-                  osisdie/claude-code-channels
-                </th>
-                <th className="text-left font-medium p-4 text-muted-foreground">
-                  Twilio + API
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr
-                  key={r.feature}
-                  className="border-b border-border last:border-b-0"
-                >
-                  <td className="p-4 font-medium">{r.feature}</td>
-                  <Cell value={r.cb} strong />
-                  <Cell value={r.rich} />
-                  <Cell value={r.osisdie} />
-                  <Cell value={r.twilio} />
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Cell({ value, strong = false }: { value: string; strong?: boolean }) {
-  const isYes = value === "yes";
-  const isNo = value === "no";
-  return (
-    <td
-      className={`p-4 text-sm font-mono ${
-        strong ? "text-foreground" : "text-muted-foreground"
-      }`}
-    >
-      {isYes ? (
-        <span style={{ color: "var(--brand)" }}>✓</span>
-      ) : isNo ? (
-        <span className="opacity-50">—</span>
-      ) : (
-        value
-      )}
-    </td>
-  );
-}
-
-// ============================================================================
-// Install
-// ============================================================================
-
-function Install() {
-  const macOS = `git clone https://github.com/eusougustavocesar/reverb.git
-cd reverb
-npm install && npm run build
-
-# 1. Scaffold LaunchAgent plist
-bash scripts/install.sh
-
-# 2. Pair your phone (scan QR)
-npm run pair
-
-# 3. Start the daemon
-launchctl bootstrap gui/$(id -u) \\
-  ~/Library/LaunchAgents/com.$(whoami).reverb.plist`;
-
-  const linux = `# systemd unit ships in v0.3 — for now, bare-metal:
-git clone https://github.com/eusougustavocesar/reverb.git
-cd reverb
-npm install && npm run build
-npm run pair          # scan QR, Ctrl+C when paired
-nohup npm run start > reverb.log 2>&1 &`;
-
-  const docker = `# Docker image is a v0.3 roadmap item. Follow:
-# https://github.com/eusougustavocesar/reverb/issues
-#
-# Meanwhile: bare-metal install on any Node-capable host
-# works the same way as Linux.`;
-
-  return (
-    <section id="install" className="border-b border-border">
-      <div className="mx-auto max-w-5xl px-6 py-20">
-        <div className="flex flex-col items-start gap-3 mb-12">
-          <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
-            Install
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight max-w-2xl">
-            Clone to daemon in 5 minutes.
-          </h2>
-        </div>
-
-        <Tabs defaultValue="macos" className="gap-4">
-          <TabsList>
-            <TabsTrigger value="macos">macOS</TabsTrigger>
-            <TabsTrigger value="linux">Linux</TabsTrigger>
-            <TabsTrigger value="docker">Docker</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="macos">
-            <TerminalBlock lang="macOS · bash" code={macOS} />
-          </TabsContent>
-          <TabsContent value="linux">
-            <TerminalBlock lang="Linux · bash" code={linux} />
-          </TabsContent>
-          <TabsContent value="docker">
-            <TerminalBlock lang="Docker · planned" code={docker} />
-          </TabsContent>
-        </Tabs>
-
-        <p className="mt-6 text-sm text-muted-foreground max-w-2xl">
-          Boot it once. It handles the rest — starts on login, reconnects on
-          network drops, restarts on crash. Message yourself on WhatsApp to
-          verify.
-        </p>
-
-        <div className="mt-8 grid sm:grid-cols-3 gap-3">
-          <LinkCard
-            href={GH_DOCS}
-            label="Docs"
-            description="Architecture, security model, troubleshooting."
-          />
-          <LinkCard
-            href={GH_WHY}
-            label="Why it exists"
-            description="The persistence problem, explained."
-          />
-          <LinkCard
-            href={GH_RELEASE}
-            label="v0.1.0 release"
-            description="Changelog and release notes."
-          />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function TerminalBlock({ lang, code }: { lang: string; code: string }) {
-  return (
-    <div className="rounded-2xl border border-border bg-card/40 overflow-hidden">
-      <div className="px-5 py-3 border-b border-border flex items-center gap-2">
-        <span className="h-3 w-3 rounded-full bg-red-500/70" />
-        <span className="h-3 w-3 rounded-full bg-yellow-500/70" />
-        <span className="h-3 w-3 rounded-full bg-green-500/70" />
-        <span className="ml-3 text-xs font-mono text-muted-foreground">
-          {lang}
-        </span>
-        <div className="ml-auto">
-          <CopyButton value={code} />
-        </div>
-      </div>
-      <pre className="p-6 text-xs md:text-sm font-mono overflow-x-auto leading-relaxed text-foreground/90">
-        {code}
-      </pre>
-    </div>
-  );
-}
-
-function LinkCard({
-  href,
-  label,
-  description,
-}: {
-  href: string;
-  label: string;
-  description: string;
-}) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group rounded-xl border border-border bg-card/40 p-5 hover:bg-card transition-colors flex flex-col gap-1"
-    >
-      <span className="font-medium text-sm flex items-center gap-2">
-        {label}
-        <span className="text-muted-foreground group-hover:text-foreground transition-colors">
-          ↗
-        </span>
-      </span>
-      <span className="text-xs text-muted-foreground">{description}</span>
-    </a>
-  );
-}
-
-// ============================================================================
-// Footer
-// ============================================================================
 
 function Footer() {
   return (
@@ -666,28 +111,13 @@ function Footer() {
           </p>
         </div>
         <nav className="flex items-center gap-5 text-sm">
-          <a
-            href={GH}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
+          <a href={GH} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
             GitHub
           </a>
-          <a
-            href={GH_DOCS}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
+          <a href={GH_DOCS} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
             Docs
           </a>
-          <a
-            href={`${GH}/releases`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
+          <a href={`${GH}/releases`} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
             Releases
           </a>
         </nav>
