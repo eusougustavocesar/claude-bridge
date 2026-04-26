@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import pino from "pino";
 import { state, claudeAuth } from "./state.js";
 import { readEnvFile, writeEnvFile } from "../lib/env.js";
+import { formatNotification, type NotifyLevel } from "../lib/notify.js";
 
 const logger = pino({ level: "info", name: "http" });
 
@@ -20,12 +21,19 @@ const WEB_DIST = join(REPO_ROOT, "web", "out");
 const ENV_PATH = join(REPO_ROOT, ".env");
 const AUDIT_PATH = join(REPO_ROOT, "logs", "audit.jsonl");
 
+/** Minimal duck-typed interface — avoids importing Baileys types here. */
+export interface WASend {
+  sendMessage: (jid: string, content: { text: string }) => Promise<unknown>;
+}
+
 export interface HttpServerOptions {
   host?: string;
   port?: number;
   onStop?: () => void;
   readEnv: () => Record<string, string>;
   writeEnv: (values: Record<string, string>) => void;
+  /** Returns the live WhatsApp socket, or null if not yet connected. */
+  getSock?: () => WASend | null;
   /** Absolute path to the `claude` CLI binary. */
   claudeBin: string;
   /** Working directory to spawn `claude --print` in. */
@@ -50,6 +58,7 @@ export function createHttpServer(opts: HttpServerOptions) {
       version: state.version,
       uptimeMs: Date.now() - state.startedAt,
       processed: state.processed,
+      notified: state.notified,
       lastError: state.lastError,
       hasQr: state.qr !== null,
     });
@@ -258,6 +267,60 @@ export function createHttpServer(opts: HttpServerOptions) {
     } catch (err) {
       logger.error({ err }, "failed to read audit log");
       return c.json({ entries: [], error: "read failed" }, 500);
+    }
+  });
+
+  app.post("/api/notify", async (c) => {
+    // Optional bearer-token auth
+    const notifyToken = (opts.readEnv().NOTIFY_TOKEN ?? "").trim();
+    if (notifyToken) {
+      const auth = c.req.header("authorization") ?? "";
+      if (auth !== `Bearer ${notifyToken}`) {
+        return c.json({ error: "unauthorized" }, 401);
+      }
+    }
+
+    const body = (await c.req.json().catch(() => null)) as {
+      title?: string;
+      body?: string;
+      level?: NotifyLevel;
+      service?: string;
+      to?: string;
+    } | null;
+
+    if (!body?.title || typeof body.title !== "string") {
+      return c.json({ error: "`title` is required" }, 400);
+    }
+
+    const sock = opts.getSock?.() ?? null;
+    if (!sock) {
+      return c.json({ error: "not connected to WhatsApp" }, 503);
+    }
+
+    const env = opts.readEnv();
+    const jid = body.to ?? env.NOTIFY_JID ?? state.me?.id ?? null;
+    if (!jid) {
+      return c.json(
+        { error: "no target JID — set NOTIFY_JID in .env or pass `to` in body" },
+        400
+      );
+    }
+
+    const text = formatNotification({
+      title: body.title,
+      body: body.body,
+      level: body.level,
+      service: body.service,
+    });
+
+    try {
+      await sock.sendMessage(jid, { text });
+      state.notified += 1;
+      logger.info({ jid, title: body.title, level: body.level }, "notification sent");
+      return c.json({ ok: true, sent: true });
+    } catch (err) {
+      logger.error({ err }, "failed to send notification");
+      return c.json({ error: "send failed" }, 500);
     }
   });
 

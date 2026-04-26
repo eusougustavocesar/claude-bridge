@@ -19,6 +19,13 @@ let server: { close: () => void };
 let testDir: string;
 let envStore: Record<string, string>;
 
+const mockSentMessages: Array<{ jid: string; text: string }> = [];
+const mockSock = {
+  sendMessage: async (jid: string, content: { text: string }) => {
+    mockSentMessages.push({ jid, text: content.text });
+  },
+};
+
 beforeAll(() => {
   testDir = join(tmpdir(), `reverb-http-test-${Date.now()}`);
   mkdirSync(testDir, { recursive: true });
@@ -33,6 +40,7 @@ beforeAll(() => {
     writeEnv: (values) => {
       Object.assign(envStore, values);
     },
+    getSock: () => mockSock,
     onStop: vi.fn(),
     claudeBin: "claude",
     claudeCwd: testDir,
@@ -189,6 +197,98 @@ describe("POST /api/stop", () => {
     await new Promise((r) => setTimeout(r, 150));
     expect(exitSpy).toHaveBeenCalledWith(0);
     exitSpy.mockRestore();
+  });
+});
+
+// ─── /api/notify ─────────────────────────────────────────────────────────────
+
+describe("POST /api/notify", () => {
+  beforeEach(() => {
+    mockSentMessages.length = 0;
+    envStore.NOTIFY_JID = "5500000000000@s.whatsapp.net";
+    delete envStore.NOTIFY_TOKEN;
+  });
+
+  it("returns 200 and sends message when connected", async () => {
+    const res = await fetch(`${BASE}/api/notify`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "Deploy ok", level: "success", service: "api" }),
+    });
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.ok).toBe(true);
+    expect(json.sent).toBe(true);
+    expect(mockSentMessages).toHaveLength(1);
+    expect(mockSentMessages[0].text).toContain("Deploy ok");
+    expect(mockSentMessages[0].text).toContain("🟢");
+  });
+
+  it("returns 400 when title is missing", async () => {
+    const res = await fetch(`${BASE}/api/notify`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ body: "no title here" }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it("returns 401 when token is wrong", async () => {
+    envStore.NOTIFY_TOKEN = "secret123";
+    const res = await fetch(`${BASE}/api/notify`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: "Bearer wrong",
+      },
+      body: JSON.stringify({ title: "test" }),
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it("accepts correct bearer token", async () => {
+    envStore.NOTIFY_TOKEN = "secret123";
+    const res = await fetch(`${BASE}/api/notify`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: "Bearer secret123",
+      },
+      body: JSON.stringify({ title: "authorized" }),
+    });
+    expect(res.status).toBe(200);
+  });
+
+  it("uses `to` field in body as target JID", async () => {
+    const targetJid = "5599999999999@s.whatsapp.net";
+    await fetch(`${BASE}/api/notify`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "custom jid", to: targetJid }),
+    });
+    expect(mockSentMessages[0]?.jid).toBe(targetJid);
+  });
+
+  it("returns 503 when getSock returns null", async () => {
+    // Create a second server on a different port with getSock: () => null
+    const { createHttpServer: createServer } = await import("../http/server.js");
+    const nullSockServer = createServer({
+      host: "127.0.0.1",
+      port: 39992,
+      readEnv: () => ({ NOTIFY_JID: "5500@s.whatsapp.net" }),
+      writeEnv: () => {},
+      getSock: () => null,
+      claudeBin: "claude",
+      claudeCwd: testDir,
+      claudeMcpConfig: join(testDir, "empty-mcp.json"),
+    });
+    const res = await fetch("http://127.0.0.1:39992/api/notify", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "test" }),
+    });
+    expect(res.status).toBe(503);
+    nullSockServer.close();
   });
 });
 

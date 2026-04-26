@@ -165,6 +165,43 @@ See [`docs/configuration.md`](docs/configuration.md) for details and [`docs/trou
 - `/help` — list commands
 - `/stop` — shut down the bridge (the background service auto-restarts; disable the service/task to stop permanently)
 
+## Notifications (inbound webhooks)
+
+Any service can push a notification to your WhatsApp by posting to reverb's local HTTP API:
+
+```bash
+curl -X POST http://localhost:3737/api/notify \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Deploy failed","body":"api-server stopped after 3 retries","level":"error","service":"api-server"}'
+```
+
+You'll receive:
+
+```
+🔴 *Deploy failed*
+_api-server_
+
+api-server stopped after 3 retries
+
+— reverb · 14:32
+```
+
+**Payload fields:**
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `title` | string | ✅ | Notification headline |
+| `body` | string | — | Detail text |
+| `level` | `error` \| `warning` \| `info` \| `success` | — | Sets the emoji (🔴🟡🔵🟢) |
+| `service` | string | — | Service or source name |
+| `to` | string | — | Target JID (overrides `NOTIFY_JID`) |
+
+**Auth:** Set `NOTIFY_TOKEN` in `.env` to require `Authorization: Bearer <token>`.
+
+**Target JID:** Set `NOTIFY_JID` in `.env` to route notifications to a specific chat. Defaults to your self-chat.
+
+Since the API is bound to `127.0.0.1`, it's only reachable from the same machine — no need to expose it to the internet.
+
 ## Comparison
 
 | | reverb | [Rich627/whatsapp-claude-plugin][rich627] | [osisdie/claude-code-channels][osisdie] | Twilio + API |

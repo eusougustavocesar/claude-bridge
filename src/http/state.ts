@@ -17,6 +17,7 @@ export interface BridgeState {
   me: { id: string; name: string | null } | null;
   lastError: string | null;
   processed: number;
+  notified: number;
 }
 
 export const state: BridgeState = {
@@ -27,6 +28,7 @@ export const state: BridgeState = {
   me: null,
   lastError: null,
   processed: 0,
+  notified: 0,
 };
 
 /**

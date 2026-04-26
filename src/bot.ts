@@ -123,6 +123,7 @@ async function main() {
     browser: ["reverb", "Chrome", "1.0.0"],
     logger: pino({ level: "silent" }) as any,
   });
+  currentSock = sock;
 
   sock.ev.on("creds.update", saveCreds);
 
@@ -381,6 +382,9 @@ function ensureSandbox() {
 // Entrypoint
 // ============================================================================
 
+// Mutable ref updated each time main() creates a new socket (including reconnects)
+let currentSock: WASocket | null = null;
+
 // Start HTTP admin server (optional)
 let httpServerInstance: { close: () => void } | null = null;
 if (HTTP_ENABLED) {
@@ -389,6 +393,7 @@ if (HTTP_ENABLED) {
     port: HTTP_PORT,
     readEnv: () => readEnvFile(ENV_PATH),
     writeEnv: (values) => writeEnvFile(ENV_PATH, values),
+    getSock: () => currentSock,
     onStop: () => logger.warn("stop requested via HTTP"),
     claudeBin: CLAUDE_BIN,
     claudeCwd: CLAUDE_CWD,
