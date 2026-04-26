@@ -314,6 +314,40 @@ describe("POST /api/notify", () => {
     expect(res.status).toBe(400);
   });
 
+  // ── NOTIFY_ROUTES routing ───────────────────────────────────────────────────
+
+  it("routes to jid from NOTIFY_ROUTES when service matches", async () => {
+    envStore.NOTIFY_ROUTES = "api:5511111111111@s.whatsapp.net";
+    await fetch(`${BASE}/api/notify`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "x", service: "api" }),
+    });
+    expect(mockSentMessages[0].jid).toBe("5511111111111@s.whatsapp.net");
+  });
+
+  it("NOTIFY_ROUTES is overridden by explicit `to` field", async () => {
+    envStore.NOTIFY_ROUTES = "api:5511111111111@s.whatsapp.net";
+    const override = "5599999999999@s.whatsapp.net";
+    await fetch(`${BASE}/api/notify`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "x", service: "api", to: override }),
+    });
+    expect(mockSentMessages[0].jid).toBe(override);
+  });
+
+  it("falls back to NOTIFY_JID when service is not in NOTIFY_ROUTES", async () => {
+    envStore.NOTIFY_ROUTES = "db:5522222222222@s.whatsapp.net";
+    envStore.NOTIFY_JID = "5500000000000@s.whatsapp.net";
+    await fetch(`${BASE}/api/notify`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title: "x", service: "api" }),
+    });
+    expect(mockSentMessages[0].jid).toBe("5500000000000@s.whatsapp.net");
+  });
+
   // ── counter ─────────────────────────────────────────────────────────────────
 
   it("increments notified counter on success", async () => {

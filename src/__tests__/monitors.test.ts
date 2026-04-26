@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { writeFileSync, unlinkSync, existsSync } from "node:fs";
 
 // ── Mocks (hoisted) ──────────────────────────────────────────────────────────
 
@@ -10,8 +9,9 @@ vi.mock("node:child_process", () => ({
 }));
 
 import { spawn } from "node:child_process";
+import { writeFileSync, unlinkSync, existsSync } from "node:fs";
 import { parseIntervalMs, scheduleInterval, scheduleCron } from "../monitors/scheduler.js";
-import { loadMonitors } from "../monitors/index.js";
+import { loadMonitors, startMonitors } from "../monitors/index.js";
 import { runHttpCheck } from "../monitors/http.js";
 import { runShellCheck } from "../monitors/shell.js";
 import { parseNotifyRoutes } from "../http/server.js";
@@ -392,6 +392,111 @@ describe("runShellCheck", () => {
       ["-c", "echo hello"],
       expect.anything()
     );
+  });
+});
+
+// ── startMonitors ─────────────────────────────────────────────────────────────
+
+describe("startMonitors", () => {
+  const tmpFile = join(tmpdir(), `reverb_test_start_monitors_${Date.now()}.json`);
+
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => {
+    vi.useRealTimers();
+    if (existsSync(tmpFile)) unlinkSync(tmpFile);
+  });
+
+  function write(data: unknown) {
+    writeFileSync(tmpFile, JSON.stringify(data));
+  }
+
+  it("returns noop stop function when config file does not exist", () => {
+    const stop = startMonitors(makeSock() as any, "/nonexistent.json", logger);
+    expect(typeof stop).toBe("function");
+    expect(() => stop()).not.toThrow();
+  });
+
+  it("returns noop stop function when config is empty array", () => {
+    write([]);
+    const stop = startMonitors(makeSock() as any, tmpFile, logger);
+    expect(typeof stop).toBe("function");
+    expect(() => stop()).not.toThrow();
+  });
+
+  it("does not throw when config JSON is malformed — logs error and disables monitors", () => {
+    writeFileSync(tmpFile, "{ broken json }");
+    expect(() => startMonitors(makeSock() as any, tmpFile, logger)).not.toThrow();
+    expect(logger.error).toHaveBeenCalled();
+  });
+
+  it("fires http monitor tick immediately on start", () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true } as Response));
+    write([makeHttpMonitor()]);
+    startMonitors(makeSock() as any, tmpFile, logger);
+    // fetch is called synchronously inside scheduleInterval's immediate fn() call
+    expect(vi.mocked(fetch)).toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+
+  it("fires shell monitor tick immediately on start", () => {
+    makeSpawnMock("output", "", 0);
+    write([makeShellMonitor()]);
+    startMonitors(makeSock() as any, tmpFile, logger);
+    expect(vi.mocked(spawn)).toHaveBeenCalled();
+  });
+
+  it("schedules repeated ticks for interval monitors", () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true } as Response));
+    write([makeHttpMonitor({ interval: "1m" })]);
+    startMonitors(makeSock() as any, tmpFile, logger);
+    const callsAfterBoot = vi.mocked(fetch).mock.calls.length; // 1 (immediate)
+    vi.advanceTimersByTime(60_000);
+    expect(vi.mocked(fetch).mock.calls.length).toBeGreaterThan(callsAfterBoot);
+    vi.unstubAllGlobals();
+  });
+
+  it("stop() cancels all scheduled monitors", () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true } as Response));
+    write([makeHttpMonitor({ interval: "1m" })]);
+    const stop = startMonitors(makeSock() as any, tmpFile, logger);
+    stop();
+    vi.mocked(fetch).mockClear();
+    vi.advanceTimersByTime(120_000);
+    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+
+  it("skips monitor with invalid interval and logs error", () => {
+    write([makeHttpMonitor({ interval: "bad" })]);
+    expect(() => startMonitors(makeSock() as any, tmpFile, logger)).not.toThrow();
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ monitor: "test-http" }),
+      expect.stringContaining("Invalid interval")
+    );
+  });
+
+  it("skips monitor with no interval or cron and logs warning", () => {
+    const monitor = { ...makeHttpMonitor() };
+    delete (monitor as any).interval;
+    write([monitor]);
+    startMonitors(makeSock() as any, tmpFile, logger);
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ monitor: "test-http" }),
+      expect.stringContaining("no interval or cron")
+    );
+  });
+
+  it("logs warning and skips tick for unknown monitor type", () => {
+    makeSpawnMock("", "", 0);
+    write([{ ...makeShellMonitor(), type: "unknown-type" }]);
+    const sock = makeSock();
+    startMonitors(sock as any, tmpFile, logger);
+    // warn is logged synchronously during the immediate tick
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "unknown-type" }),
+      expect.stringContaining("Unknown monitor type")
+    );
+    expect(sock.sendMessage).not.toHaveBeenCalled();
   });
 });
 

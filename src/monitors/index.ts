@@ -23,7 +23,14 @@ export function startMonitors(
   configPath: string,
   logger: Logger
 ): () => void {
-  const monitors = loadMonitors(configPath);
+  let monitors: MonitorConfig[];
+  try {
+    monitors = loadMonitors(configPath);
+  } catch (err) {
+    logger.error({ err }, "Failed to load monitors config — monitors disabled");
+    return () => {};
+  }
+
   if (monitors.length === 0) return () => {};
 
   const stopFns: Array<() => void> = [];
@@ -36,10 +43,13 @@ export function startMonitors(
         runHttpCheck(monitor, state, sock, logger).catch((err) =>
           logger.error({ err, monitor: monitor.name }, "http monitor tick error")
         );
-      } else {
+      } else if (monitor.type === "shell") {
         runShellCheck(monitor, sock, logger).catch((err) =>
           logger.error({ err, monitor: monitor.name }, "shell monitor tick error")
         );
+      } else {
+        const unknown = monitor as MonitorConfig;
+        logger.warn({ monitor: unknown.name, type: (unknown as any).type }, "Unknown monitor type — skipped");
       }
     };
 
